@@ -42,7 +42,7 @@ typedef struct {
 static PyTypeObject RadixNode_Type;
 
 static RadixNodeObject *
-newRadixNodeObject(PyObject *arg, radix_node_t *rn)
+newRadixNodeObject(radix_node_t *rn)
 {
 	RadixNodeObject *self;
 	char network[256], prefix[256];
@@ -237,7 +237,7 @@ Radix_add(RadixObject *self, PyObject *args)
 	 * Confusing? yeah...
 	 */
 	if (node->data == NULL) {
-		if ((node_obj = newRadixNodeObject(NULL, node)) == NULL)
+		if ((node_obj = newRadixNodeObject(node)) == NULL)
 			return (NULL);
 		node->data = node_obj;
 	} else
