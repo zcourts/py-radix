@@ -1,0 +1,27 @@
+
+
+radix = radix.Radix()
+
+radix_node = radix.add("10.1.2.0")
+radix_node = radix.add("10.1.2.0/24")
+radix_node = radix.add("10.1.2.0", 24)
+(raises KeyError)
+
+radix.del("10.1.2.0")
+radix.del("10.1.2.0/24")
+radix.del("10.1.2.0", 24)
+(raises KeyError)
+
+radix_node = radix.search_exact("10.1.2.0")
+radix_node = radix.search_exact("10.1.2.0/24")
+radix_node = radix.search_exact("10.1.2.0", 24)
+(return None on fail)
+
+radix_node = radix.search_best("10.1.2.0")
+radix_node = radix.search_best("10.1.2.0/24")
+radix_node = radix.search_best("10.1.2.0", 24)
+(return None on fail)
+
+radix.walk(callbackfn)
+radix.walk(callbackfn, callback_arg)
+
