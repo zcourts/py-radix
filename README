@@ -1,0 +1,49 @@
+py-radix is an implementation of a radix tree data structure for the storage 
+and retrieval of IPv4 and IPv6 network prefixes.
+
+The radix tree is the data structure most commonly used for routing table 
+lookups. It efficiently stores network prefixes of varying lengths and 
+allows fast lookups of containing networks.
+
+py-radix is licensed under a ISC/BSD licence. The underlying radix tree 
+implementation is taken (and modified) from MRTd and is subject to a 4-term 
+BSD license. See the LICENSE file for details.
+
+Please report bugs to Damien Miller <djm@mindrot.org>
+
+A simple example, that demonstrates most of the features:
+
+	import radix
+
+	# Create a new tree
+	rtree = radix.Radix()
+
+	# Adding a node returns a RadixNode object. You can creat
+	# arbitrary members in this to store your data
+	rnode = rtree.add("10.0.0.0/8")
+	rnode.blah = "whatever you want"
+
+	# Exact search will only return prefixes you have entered
+	rnode = rtree.search_exact("10.0.0.0/8")
+	# Get your data back out
+	print rnode.blah
+
+	# Best-match search will return the longest matching prefix
+	# that contains the search term (routing-style lookup)
+	rnode = rtree.search_best("10.123.45.6")
+
+	# There are a couple of implicit members of a RadixNode:
+	print rnode.network     # -> "10.0.0.0"
+	print rnode.prefix      # -> "10.0.0.0/8"
+	print rnode.prefixlen   # -> 8
+	print rnode.family      # int (same as socket.AF_INET)
+
+	# IPv6 prefixes are fully supported
+	rnode = rtree.add("2001:200::/32")
+	rnode = rtree.add("::/0")
+
+	# Use the nodes() function to return all prefixes entered
+	nodes = rtree.nodes()
+	for rnode in nodes:
+		print rnode.prefix
+

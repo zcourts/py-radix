@@ -19,7 +19,7 @@
 import sys
 from distutils.core import setup, Extension
 
-VERSION = "0.0"
+VERSION = "0.1"
 
 if __name__ == '__main__':
 	radix = Extension('radix',

@@ -15,6 +15,7 @@
  */
 
 #include "Python.h"
+#include "structmember.h"
 #include "radix.h"
 
 /* $Id$ */
@@ -26,24 +27,44 @@
 typedef struct {
 	PyObject_HEAD
 	PyObject *user_attr;	/* User-specified attributes */
+	PyObject *network;
+	PyObject *prefix;
+	PyObject *prefixlen;
+	PyObject *family;
 	radix_node_t *rn;	/* Actual radix node (pointer to parent) */
-	char *network;		/* Text representation of network */
-	char *prefix;		/* Text representation of prefix */
-	int prefixlen;
-	int family;
 } RadixNodeObject;
 
 static PyTypeObject RadixNode_Type;
 
 static RadixNodeObject *
-newRadixNodeObject(PyObject *arg)
+newRadixNodeObject(PyObject *arg, radix_node_t *rn)
 {
 	RadixNodeObject *self;
+	char network[256], prefix[256];
+
 	self = PyObject_New(RadixNodeObject, &RadixNode_Type);
 	if (self == NULL)
 		return NULL;
+
 	self->user_attr = NULL;
-	self->rn = NULL;
+	self->rn = rn;
+
+	/* Format addresses for packing into objects */
+	prefix_addr_ntop(rn->prefix, network, sizeof(network));
+	snprintf(prefix, sizeof(prefix), "%s/%d", network, rn->prefix->bitlen);
+
+	self->prefixlen = PyInt_FromLong(rn->prefix->bitlen);
+	self->family = PyInt_FromLong(rn->prefix->family);
+	self->network = PyString_FromString(network);
+	self->prefix = PyString_FromString(prefix);
+	
+	if (self->prefixlen == NULL || self->family == NULL || 
+	    self->network == NULL || self->prefix == NULL) {
+		/* RadixNode_dealloc will clean up for us */
+		Py_XDECREF(self);
+		return (NULL);		
+	}
+
 	return self;
 }
 
@@ -52,13 +73,11 @@ newRadixNodeObject(PyObject *arg)
 static void
 RadixNode_dealloc(RadixNodeObject *self)
 {
-	if (self->network != NULL)
-		free(self->network);
-	if (self->prefix != NULL)
-		free(self->prefix);
-	if (self->rn != NULL)
-		self->rn->data = NULL;
 	Py_XDECREF(self->user_attr);
+	Py_XDECREF(self->prefixlen);
+	Py_XDECREF(self->family);
+	Py_XDECREF(self->network);
+	Py_XDECREF(self->prefix);
 	PyObject_Del(self);
 }
 
@@ -67,14 +86,22 @@ RadixNode_getattr(RadixNodeObject *self, char *name)
 {
 	PyObject *user_obj;
 
-	if (strcmp(name, "network") == 0)
-		return PyString_FromString(self->network);
-	else if (strcmp(name, "prefix") == 0)
-		return PyString_FromString(self->prefix);
-	else if (strcmp(name, "prefixlen") == 0)
-		return PyInt_FromLong(self->prefixlen);
-	else if (strcmp(name, "family") == 0)
-		return PyInt_FromLong(self->family);
+	if (strcmp(name, "network") == 0) {
+		Py_INCREF(self->network);
+		return self->network;
+	}
+	if (strcmp(name, "prefix") == 0) {
+		Py_INCREF(self->prefix);
+		return self->prefix;
+	}
+	if (strcmp(name, "prefixlen") == 0) {
+		Py_INCREF(self->prefixlen);
+		return self->prefixlen;
+	}
+	if (strcmp(name, "family") == 0) {
+		Py_INCREF(self->family);
+		return self->family;
+	}
 
 	if (self->user_attr != NULL) {
 		user_obj = PyDict_GetItemString(self->user_attr, name);
@@ -92,7 +119,7 @@ RadixNode_setattr(RadixNodeObject *self, char *name, PyObject *v)
 	if (strcmp(name, "network") == 0 || strcmp(name, "prefix") == 0 ||
 	    strcmp(name, "prefixlen") == 0 || strcmp(name, "family") == 0) {
 		PyErr_SetString(PyExc_AttributeError,
-		    "attempt to modify read-only RadixNode attribute");
+		    "attempt to modify read-only RadixNode members");
 		return -1;
 	}
 
@@ -132,32 +159,32 @@ static PyTypeObject RadixNode_Type = {
 	0,			/*tp_as_sequence*/
 	0,			/*tp_as_mapping*/
 	0,			/*tp_hash*/
-        0,                      /*tp_call*/
-        0,                      /*tp_str*/
-        0,                      /*tp_getattro*/
-        0,                      /*tp_setattro*/
-        0,                      /*tp_as_buffer*/
-        Py_TPFLAGS_DEFAULT,     /*tp_flags*/
-        0,                      /*tp_doc*/
-        0,                      /*tp_traverse*/
-        0,                      /*tp_clear*/
-        0,                      /*tp_richcompare*/
-        0,                      /*tp_weaklistoffset*/
-        0,                      /*tp_iter*/
-        0,                      /*tp_iternext*/
-        0,                      /*tp_methods*/
-        0,                      /*tp_members*/
-        0,                      /*tp_getset*/
-        0,                      /*tp_base*/
-        0,                      /*tp_dict*/
-        0,                      /*tp_descr_get*/
-        0,                      /*tp_descr_set*/
-        0,                      /*tp_dictoffset*/
-        0,                      /*tp_init*/
-        0,                      /*tp_alloc*/
-        0,                      /*tp_new*/
-        0,                      /*tp_free*/
-        0,                      /*tp_is_gc*/
+	0,			/*tp_call*/
+	0,			/*tp_str*/
+	0,			/*tp_getattro*/
+	0,			/*tp_setattro*/
+	0,			/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,	/*tp_flags*/
+	0,			/*tp_doc*/
+	0,			/*tp_traverse*/
+	0,			/*tp_clear*/
+	0,			/*tp_richcompare*/
+	0,			/*tp_weaklistoffset*/
+	0,			/*tp_iter*/
+	0,			/*tp_iternext*/
+	0,			/*tp_methods*/
+	0,			/*tp_members*/
+	0,			/*tp_getset*/
+	0,			/*tp_base*/
+	0,			/*tp_dict*/
+	0,			/*tp_descr_get*/
+	0,			/*tp_descr_set*/
+	0,			/*tp_dictoffset*/
+	0,			/*tp_init*/
+	0,			/*tp_alloc*/
+	0,			/*tp_new*/
+	0,			/*tp_free*/
+	0,			/*tp_is_gc*/
 };
 
 /* ------------------------------------------------------------------------ */
@@ -210,10 +237,18 @@ Radix_dealloc(RadixObject *self)
 	PyObject_Del(self);
 }
 
+PyDoc_STRVAR(Radix_add_doc,
+"Radix.add(prefix) -> new RadixNode object\n\
+\n\
+Adds the network specified by 'prefix' to the radix tree. 'prefix' \n\
+may be an address (indicating a unicast host) or CIDR formatted \n\
+network. Both IPv4 and IPv6 addresses/networks are supported. \n\
+Returns a RadixNode object, which can store arbitrary data.");
+
 static PyObject *
 Radix_add(RadixObject *self, PyObject *args)
 {
-	char *addr, buf1[256], buf2[256];
+	char *addr;
 	prefix_t *prefix;
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
@@ -238,26 +273,8 @@ Radix_add(RadixObject *self, PyObject *args)
 	 * Confusing? yeah...
 	 */
 	if (node->data == NULL) {
-		if ((node_obj = newRadixNodeObject(NULL)) == NULL)
+		if ((node_obj = newRadixNodeObject(NULL, node)) == NULL)
 			return (NULL);
-		node_obj->rn = node;
-		node_obj->prefixlen = node->prefix->bitlen;
-		node_obj->family = node->prefix->family;
-		prefix_addr_ntop(node->prefix, buf1, sizeof(buf1));
-		snprintf(buf2, sizeof(buf2), "%s/%d", buf1,
-		    node->prefix->bitlen);
-		if ((node_obj->network = strdup(buf1)) == NULL) {
-			node->data = NULL;
-			Py_XDECREF(node_obj);
-			PyErr_SetString(PyExc_MemoryError, "strdup failed");
-			return NULL;
-		}
-		if ((node_obj->prefix = strdup(buf2)) == NULL) {
-			node->data = NULL;
-			Py_XDECREF(node_obj);
-			PyErr_SetString(PyExc_MemoryError, "strdup failed");
-			return NULL;
-		}
 		node->data = node_obj;
 	} else
 		node_obj = node->data;
@@ -265,6 +282,12 @@ Radix_add(RadixObject *self, PyObject *args)
 	Py_XINCREF(node_obj);
 	return (PyObject *)node_obj;
 }
+
+PyDoc_STRVAR(Radix_delete_doc,
+"Radix.delete(prefix) -> None\n\
+\n\
+Deletes the specified prefix (a unicast address or a CIDR network)\n\
+from the radix tree.");
 
 static PyObject *
 Radix_delete(RadixObject *self, PyObject *args)
@@ -300,6 +323,14 @@ Radix_delete(RadixObject *self, PyObject *args)
 	return Py_None;
 }
 
+PyDoc_STRVAR(Radix_search_exact_doc,
+"Radix.search_exact(prefix) -> RadixNode or None\n\
+\n\
+Search for the specified 'prefix' (a unicast address or a CIDR\n\
+network) in the radix tree. In order to match, the 'prefix' must\n\
+be specified exactly. Contrast with Radix.search_best. If no match\n\
+is found, then returns None.");
+
 static PyObject *
 Radix_search_exact(RadixObject *self, PyObject *args)
 {
@@ -326,6 +357,14 @@ Radix_search_exact(RadixObject *self, PyObject *args)
 	Py_XINCREF(node_obj);
 	return (PyObject *)node_obj;
 }
+
+PyDoc_STRVAR(Radix_search_best_doc,
+"Radix.search_best(prefix) -> None\n\
+\n\
+Search for the specified 'prefix' (a unicast address or a CIDR\n\
+network) in the radix tree. search_best will return the best\n\
+(longest) entry that includes the specified 'prefix'.If no match\n\
+is found, then returns None.");
 
 static PyObject *
 Radix_search_best(RadixObject *self, PyObject *args)
@@ -369,6 +408,13 @@ nodes_helper(radix_node_t *rn, void *cbctx)
 		PyList_Append(ctx->ret, (PyObject *)rn->data);
 }
 
+PyDoc_STRVAR(Radix_nodes_doc,
+"Radix.nodes(prefix) -> List of RadixNode\n\
+\n\
+Returns a list containing RadixNode for each prefix that has been\n\
+entered into the tree. This list may be empty if no prefixes have\n\
+been entered.");
+
 static PyObject *
 Radix_nodes(RadixObject *self, PyObject *args)
 {
@@ -384,17 +430,14 @@ Radix_nodes(RadixObject *self, PyObject *args)
 	return (cbctx.ret);
 }
 
+PyDoc_STRVAR(Radix_doc, "Radix tree");
+
 static PyMethodDef Radix_methods[] = {
-	{"add",		(PyCFunction)Radix_add,		METH_VARARGS,
-		PyDoc_STR("add() -> XXX")},
-	{"delete",	(PyCFunction)Radix_delete,	METH_VARARGS,
-		PyDoc_STR("del() -> XXX")},
-	{"search_exact",(PyCFunction)Radix_search_exact,METH_VARARGS,
-		PyDoc_STR("search_exact() -> XXX")},
-	{"search_best",	(PyCFunction)Radix_search_best,	METH_VARARGS,
-		PyDoc_STR("search_best() -> XXX")},
-	{"nodes",	(PyCFunction)Radix_nodes,	METH_VARARGS,
-		PyDoc_STR("nodes() -> XXX")},
+	{"add",		(PyCFunction)Radix_add,		METH_VARARGS,	Radix_add_doc		},
+	{"delete",	(PyCFunction)Radix_delete,	METH_VARARGS,	Radix_delete_doc	},
+	{"search_exact",(PyCFunction)Radix_search_exact,METH_VARARGS,	Radix_search_exact_doc	},
+	{"search_best",	(PyCFunction)Radix_search_best,	METH_VARARGS,	Radix_search_best_doc	},
+	{"nodes",	(PyCFunction)Radix_nodes,	METH_VARARGS,	Radix_nodes_doc		},
 	{NULL,		NULL}		/* sentinel */
 };
 
@@ -417,37 +460,42 @@ static PyTypeObject Radix_Type = {
 	0,			/*tp_as_sequence*/
 	0,			/*tp_as_mapping*/
 	0,			/*tp_hash*/
-        0,                      /*tp_call*/
-        0,                      /*tp_str*/
-        0,                      /*tp_getattro*/
-        0,                      /*tp_setattro*/
-        0,                      /*tp_as_buffer*/
-        Py_TPFLAGS_DEFAULT,     /*tp_flags*/
-        0,                      /*tp_doc*/
-        0,                      /*tp_traverse*/
-        0,                      /*tp_clear*/
-        0,                      /*tp_richcompare*/
-        0,                      /*tp_weaklistoffset*/
-        0,                      /*tp_iter*/
-        0,                      /*tp_iternext*/
-        Radix_methods,		/*tp_methods*/
-        0,                      /*tp_members*/
-        0,                      /*tp_getset*/
-        0,                      /*tp_base*/
-        0,                      /*tp_dict*/
-        0,                      /*tp_descr_get*/
-        0,                      /*tp_descr_set*/
-        0,                      /*tp_dictoffset*/
-        0,                      /*tp_init*/
-        0,                      /*tp_alloc*/
-        0,                      /*tp_new*/
-        0,                      /*tp_free*/
-        0,                      /*tp_is_gc*/
+	0,			/*tp_call*/
+	0,			/*tp_str*/
+	0,			/*tp_getattro*/
+	0,			/*tp_setattro*/
+	0,			/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,	/*tp_flags*/
+	Radix_doc,		/*tp_doc*/
+	0,			/*tp_traverse*/
+	0,			/*tp_clear*/
+	0,			/*tp_richcompare*/
+	0,			/*tp_weaklistoffset*/
+	0,			/*tp_iter*/
+	0,			/*tp_iternext*/
+	Radix_methods,		/*tp_methods*/
+	0,			/*tp_members*/
+	0,			/*tp_getset*/
+	0,			/*tp_base*/
+	0,			/*tp_dict*/
+	0,			/*tp_descr_get*/
+	0,			/*tp_descr_set*/
+	0,			/*tp_dictoffset*/
+	0,			/*tp_init*/
+	0,			/*tp_alloc*/
+	0,			/*tp_new*/
+	0,			/*tp_free*/
+	0,			/*tp_is_gc*/
 };
 
 /* ------------------------------------------------------------------------ */
 
 /* Radix object creator */
+
+PyDoc_STRVAR(radix_Radix_doc,
+"Radix() -> new Radix tree object\n\
+\n\
+Instantiate a new radix tree object.");
 
 static PyObject *
 radix_Radix(PyObject *self, PyObject *args)
@@ -463,13 +511,53 @@ radix_Radix(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef radix_methods[] = {
-	{"Radix",	radix_Radix,		METH_VARARGS,
-		PyDoc_STR("Radix() -> new radix object")},
+	{"Radix",	radix_Radix,	METH_VARARGS,	radix_Radix_doc	},
 	{NULL,		NULL}		/* sentinel */
 };
 
 PyDoc_STRVAR(module_doc,
-"XXX");
+"Implementation of a radix tree data structure for network prefixes.\n\
+\n\
+The radix tree is the data structure most commonly used for routing\n\
+table lookups. It efficiently stores network prefixes of varying\n\
+lengths and allows fast lookups of containing networks.\n\
+\n\
+Simple example:\n\
+\n\
+	import radix\n\
+\n\
+	# Create a new tree\n\
+	rtree = radix.Radix()\n\
+\n\
+	# Adding a node returns a RadixNode object. You can creat\n\
+	# arbitrary members in this to store your data\n\
+	rnode = rtree.add(\"10.0.0.0/8\")\n\
+	rnode.blah = \"whatever you want\"\n\
+\n\
+	# Exact search will only return prefixes you have entered\n\
+	rnode = rtree.search_exact(\"10.0.0.0/8\")\n\
+	# Get your data back out\n\
+	print rnode.blah\n\
+\n\
+	# Best-match search will return the longest matching prefix\n\
+	# that contains the search term (routing-style lookup)\n\
+	rnode = rtree.search_best(\"10.123.45.6\")\n\
+\n\
+	# There are a couple of implicit members of a RadixNode:\n\
+	print rnode.network	# -> \"10.0.0.0\"\n\
+	print rnode.prefix	# -> \"10.0.0.0/8\"\n\
+	print rnode.prefixlen	# -> 8\n\
+	print rnode.family	# int (same as socket.AF_INET)\n\
+\n\
+	# IPv6 prefixes are fully supported\n\
+	rnode = rtree.add(\"2001:200::/32\")\n\
+	rnode = rtree.add(\"::/0\")\n\
+\n\
+	# Use the nodes() function to return all prefixes entered\n\
+	nodes = rtree.nodes()\n\
+	for rnode in nodes:\n\
+  		print rnode.prefix
+");
 
 PyMODINIT_FUNC
 initradix(void)
