@@ -1,4 +1,4 @@
-20041122
+20041123
  - (djm) Use RFC3849 IPv6 prefixes in documentation
  - (djm) Some stupid platforms still lack strl*, so avoid their use
 
