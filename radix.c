@@ -40,7 +40,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Portions Copyright (c) 2004 Damien Miller <djm@mindrot.org>
+ * Portions Copyright (c) 2004,2005 Damien Miller <djm@mindrot.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -78,8 +78,8 @@
  * Originally from MRT include/mrt.h
  * $MRTId: mrt.h,v 1.1.1.1 2000/08/14 18:46:10 labovit Exp $
  */
-#define prefix_tochar(prefix)		((char *)&(prefix)->add.sin)
-#define prefix_touchar(prefix)		((u_char *)&(prefix)->add.sin)
+#define prefix_tochar(prefix)		((char *)&(prefix)->add)
+#define prefix_touchar(prefix)		((u_char *)&(prefix)->add)
 
 /*
  * Originally from MRT lib/mrt/prefix.c
