@@ -8,3 +8,10 @@
   - Keep a separate v4/v6 trees; vs.
   - Modify lookup/search to treat first bit as family==AF_INET?
 
+tree.copy()
+
+what happens to tree modifications during a walk?
+ - next node could disappear from under us...
+ - poison nodes on delete (should do anyway)
+ - keep a ref to next node? must deref properly...
+ - write a regress test

@@ -16,7 +16,9 @@ py-radix is licensed under a ISC/BSD licence. The underlying radix tree
 implementation is taken (and modified) from MRTd and is subject to a 4-term 
 BSD license. See the LICENSE file for details.
 
-Please report bugs to Damien Miller <djm@mindrot.org>
+Please report bugs to Damien Miller <djm@mindrot.org>. Please check the TODO
+file first, in case your problem is something I already know about (please
+send patches!)
 
 A simple example, that demonstrates most of the features:
 
@@ -33,24 +35,29 @@ A simple example, that demonstrates most of the features:
 	# Exact search will only return prefixes you have entered
 	rnode = rtree.search_exact("10.0.0.0/8")
 	# Get your data back out
-	print rnode.blah["blah"]
+	print rnode.data["blah"]
 
 	# Best-match search will return the longest matching prefix
 	# that contains the search term (routing-style lookup)
 	rnode = rtree.search_best("10.123.45.6")
 
 	# There are a couple of implicit members of a RadixNode:
-	print rnode.network     # -> "10.0.0.0"
-	print rnode.prefix      # -> "10.0.0.0/8"
-	print rnode.prefixlen   # -> 8
-	print rnode.family      # int (same as socket.AF_INET)
+	print rnode.network	# -> "10.0.0.0"
+	print rnode.prefix	# -> "10.0.0.0/8"
+	print rnode.prefixlen	# -> 8
+	print rnode.family	# system-dependant (same as socket.AF_INET)
 
 	# IPv6 prefixes are fully supported
+	# NB. Don't mix IPv4 and IPv6 in the same tree!
 	rnode = rtree.add("2001:200::/32")
 	rnode = rtree.add("::/0")
 
 	# Use the nodes() function to return all prefixes entered
 	nodes = rtree.nodes()
 	for rnode in nodes:
-		print rnode.prefix
+  		print rnode.prefix
 
+	# You can also directly iterate over the tree itself
+	# this would save some memory if the tree is big
+	for rnode in rtree:
+  		print rnode.prefix
