@@ -54,6 +54,19 @@
 /* $Id$ */
 
 /*
+ * Originally from MRT include/defs.h
+ * $MRTId: defs.h,v 1.1.1.1 2000/08/14 18:46:10 labovit Exp $
+ */
+#define BIT_TEST(f, b)  ((f) & (b))
+
+/*
+ * Originally from MRT include/mrt.h
+ * $MRTId: mrt.h,v 1.1.1.1 2000/08/14 18:46:10 labovit Exp $
+ */
+#define prefix_tochar(prefix)		((char *)&(prefix)->add.sin)
+#define prefix_touchar(prefix)		((u_char *)&(prefix)->add.sin)
+
+/*
  * Originally from MRT lib/mrt/prefix.c
  * $MRTId: prefix.c,v 1.1.1.1 2000/08/14 18:46:11 labovit Exp $
  */
@@ -105,7 +118,7 @@ static prefix_t
 }
 
 
-prefix_t 
+static prefix_t 
 *Ref_Prefix(prefix_t *prefix)
 {
 	if (prefix == NULL)
@@ -298,7 +311,7 @@ radix_node_t
 
 
 /* if inclusive != 0, "best" may be the given prefix itself */
-radix_node_t
+static radix_node_t
 *radix_search_best2(radix_tree_t *radix, prefix_t *prefix, int inclusive)
 {
 	radix_node_t *node;

@@ -50,116 +50,74 @@
 /* $Id$ */
 
 /*
- * Originally from MRT include/defs.h
- * $MRTId: defs.h,v 1.1.1.1 2000/08/14 18:46:10 labovit Exp $
- */
-#define BIT_TEST(f, b)  ((f) & (b))
-
-/*
  * Originally from MRT include/mrt.h
  * $MRTId: mrt.h,v 1.1.1.1 2000/08/14 18:46:10 labovit Exp $
  */
 typedef struct _prefix_t {
-    u_int family;		/* AF_INET | AF_INET6 */
-    u_int bitlen;		/* same as mask? */
-    int ref_count;		/* reference count */
-    union {
+	u_int family;			/* AF_INET | AF_INET6 */
+	u_int bitlen;			/* same as mask? */
+	int ref_count;			/* reference count */
+	union {
 		struct in_addr sin;
 		struct in6_addr sin6;
-    } add;
+	} add;
 } prefix_t;
 typedef void (*void_fn_t)();
 
-#define prefix_tolong(prefix) (assert ((prefix)->family == AF_INET),\
-			       (prefix)->add.sin.s_addr)
-#define prefix_tochar(prefix) ((char *)&(prefix)->add.sin)
-#define prefix_touchar(prefix) ((u_char *)&(prefix)->add.sin)
-#define prefix_toaddr(prefix) (&(prefix)->add.sin)
-#define prefix_getfamily(prefix) ((prefix)->family)
-#define prefix_getlen(prefix) (((prefix)->bitlen)/8)
-#define prefix_toaddr6(prefix) (assert ((prefix)->family == AF_INET6),\
-				&(prefix)->add.sin6)
-prefix_t *Ref_Prefix(prefix_t * prefix);
-void Deref_Prefix(prefix_t * prefix);
-
+void Deref_Prefix(prefix_t *prefix);
 
 /*
  * Originally from MRT include/radix.h
  * $MRTId: radix.h,v 1.1.1.1 2000/08/14 18:46:10 labovit Exp $
  */
 typedef struct _radix_node_t {
-   u_int bit;			/* flag if this node used */
-   prefix_t *prefix;		/* who we are in radix tree */
-   struct _radix_node_t *l, *r;	/* left and right children */
-   struct _radix_node_t *parent;/* may be used */
-   void *data;			/* pointer to data */
+	u_int bit;			/* flag if this node used */
+	prefix_t *prefix;		/* who we are in radix tree */
+	struct _radix_node_t *l, *r;	/* left and right children */
+	struct _radix_node_t *parent;	/* may be used */
+	void *data;			/* pointer to data */
 } radix_node_t;
 
 typedef struct _radix_tree_t {
-   radix_node_t 	*head;
-   u_int		maxbits;	/* for IP, 32 bit addresses */
-   int num_active_node;		/* for debug purpose */
+	radix_node_t *head;
+	u_int maxbits;			/* for IP, 32 bit addresses */
+	int num_active_node;		/* for debug purpose */
 } radix_tree_t;
 
-
-radix_node_t *radix_search_exact (radix_tree_t *radix, prefix_t *prefix);
-radix_node_t *radix_search_best (radix_tree_t *radix, prefix_t *prefix);
-radix_node_t * radix_search_best2 (radix_tree_t *radix, prefix_t *prefix, 
-				   int inclusive);
-radix_node_t *radix_lookup (radix_tree_t *radix, prefix_t *prefix);
-void radix_remove (radix_tree_t *radix, radix_node_t *node);
-radix_tree_t *New_Radix (void);
-void Clear_Radix (radix_tree_t *radix, void_fn_t func, void *cbctx);
-void Destroy_Radix (radix_tree_t *radix, void_fn_t func, void *cbctx);
-void radix_process (radix_tree_t *radix, void_fn_t func, void *cbctx);
-
+radix_tree_t *New_Radix(void);
+void Destroy_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx);
+void Clear_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx);
+radix_node_t *radix_lookup(radix_tree_t *radix, prefix_t *prefix);
+void radix_remove(radix_tree_t *radix, radix_node_t *node);
+radix_node_t *radix_search_exact(radix_tree_t *radix, prefix_t *prefix);
+radix_node_t *radix_search_best(radix_tree_t *radix, prefix_t *prefix);
+void radix_process(radix_tree_t *radix, void_fn_t func, void *cbctx);
 
 #define RADIX_MAXBITS 128
-#define RADIX_NBIT(x)        (0x80 >> ((x) & 0x7f))
-#define RADIX_NBYTE(x)       ((x) >> 3)
-
-#define RADIX_DATA_GET(node, type) (type *)((node)->data)
-#define RADIX_DATA_SET(node, value) ((node)->data = (void *)(value))
 
 #define RADIX_WALK(Xhead, Xnode) \
-    do { \
-        radix_node_t *Xstack[RADIX_MAXBITS+1]; \
-        radix_node_t **Xsp = Xstack; \
-        radix_node_t *Xrn = (Xhead); \
-        while ((Xnode = Xrn)) { \
-            if (Xnode->prefix)
-
-#define RADIX_WALK_ALL(Xhead, Xnode) \
-do { \
-        radix_node_t *Xstack[RADIX_MAXBITS+1]; \
-        radix_node_t **Xsp = Xstack; \
-        radix_node_t *Xrn = (Xhead); \
-        while ((Xnode = Xrn)) { \
-	    if (1)
-
-#define RADIX_WALK_BREAK { \
-	    if (Xsp != Xstack) { \
-		Xrn = *(--Xsp); \
-	     } else { \
-		Xrn = (radix_node_t *) 0; \
-	    } \
-	    continue; }
+	do { \
+		radix_node_t *Xstack[RADIX_MAXBITS+1]; \
+		radix_node_t **Xsp = Xstack; \
+		radix_node_t *Xrn = (Xhead); \
+		while ((Xnode = Xrn)) { \
+			if (Xnode->prefix)
 
 #define RADIX_WALK_END \
-            if (Xrn->l) { \
-                if (Xrn->r) { \
-                    *Xsp++ = Xrn->r; \
-                } \
-                Xrn = Xrn->l; \
-            } else if (Xrn->r) { \
-                Xrn = Xrn->r; \
-            } else if (Xsp != Xstack) { \
-                Xrn = *(--Xsp); \
-            } else { \
-                Xrn = (radix_node_t *) 0; \
-            } \
-        } \
-    } while (0)
+			if (Xrn->l) { \
+				if (Xrn->r) { \
+					*Xsp++ = Xrn->r; \
+				} \
+				Xrn = Xrn->l; \
+			} else if (Xrn->r) { \
+				Xrn = Xrn->r; \
+			} else if (Xsp != Xstack) { \
+				Xrn = *(--Xsp); \
+			} else { \
+				Xrn = (radix_node_t *) 0; \
+			} \
+		} \
+	} while (0)
 
 /* Local additions */
 
