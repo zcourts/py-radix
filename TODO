@@ -3,3 +3,5 @@
 - Extend Radix.methods to take (network, prefixlen) arguments
 
 - tree.delete(RadixNode)
+
+- thread safety
