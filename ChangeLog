@@ -1,6 +1,8 @@
 20041123
  - (djm) Use RFC3849 IPv6 prefixes in documentation
  - (djm) Some stupid platforms still lack strl*, so avoid their use
+ - (djm) Allow mixing of IPv4 and IPv6 prefixes in the same tree by keeping 
+   separate trees in the RadixObject for each AF
 
 20041122
  - (djm) Raise a RuntimeWarning and abort iteration if the tree changes while

@@ -40,6 +40,10 @@ class TestRadix(unittest.TestCase):
 		node = tree.add(network = "10.0.0.0", masklen = 24)
 		self.assertEqual(node.network, "10.0.0.0")
 		self.assertEqual(node.prefixlen, 24)
+		node2 = tree.add(network = "ff00::", masklen = 24)
+		self.assertEqual(node2.network, "ff00::")
+		self.assertEqual(node2.prefixlen, 24)
+		self.assert_(node is not node2)
 
 	def test_02__node_userdata(self):
 		tree = radix.Radix()
@@ -121,6 +125,7 @@ class TestRadix(unittest.TestCase):
 		prefixes = [
 			"10.0.0.0/8", "127.0.0.1/32",
 			"10.1.0.0/16", "10.100.100.100/32", 
+			"abcd:ef12::/32", "abcd:ef01:2345:6789::/64", "::1/128"
 		]
 		prefixes.sort()
 		for prefix in prefixes:
@@ -140,6 +145,7 @@ class TestRadix(unittest.TestCase):
 		prefixes = [
 			"10.0.0.0/8", "127.0.0.1/32",
 			"10.1.0.0/16", "10.100.100.100/32", 
+			"abcd:ef12::/32", "abcd:ef01:2345:6789::/64", "::1/128"
 		]
 		prefixes.sort()
 		for prefix in prefixes:
@@ -208,13 +214,22 @@ class TestRadix(unittest.TestCase):
 
 	def test_17__mixed_address_family(self):
 		tree = radix.Radix()
-		node1 = tree.add("127.0.0.1")
-		self.assertRaises(ValueError, tree.add, "::1")
+		node1 = tree.add("255.255.255.255", 32)
+		node2 = tree.add("ffff::/32")
+		node1_o = tree.search_best("255.255.255.255");
+		node2_o = tree.search_best("ffff::");
+		self.assert_(node1 is node1_o)
+		self.assert_(node2 is node2_o)
+		self.assertNotEquals(node1.prefix, node2.prefix)
+		self.assertNotEquals(node1.network, node2.network)
+		self.assertNotEquals(node1.family, node2.family)
 
 	def test_18__iterator(self):
 		tree = radix.Radix()
 		prefixes = [
-			"::1/128", "2000::/16", "2000::/8", "dead:beef::/64"
+			"::1/128", "2000::/16", "2000::/8", "dead:beef::/64",
+			"ffff::/16", "10.0.0.0/8", "a00::/8", "255.255.0.0/16",
+			"::/0", "0.0.0.0/0"
 		]
 		prefixes.sort()
 		for prefix in prefixes:
@@ -235,7 +250,8 @@ class TestRadix(unittest.TestCase):
 	def test_20__iterate_and_modify_tree(self):
 		tree = radix.Radix()
 		prefixes = [
-			"::1/128", "2000::/16", "2000::/8", "dead:beef::/64"
+			"::1/128", "2000::/16", "2000::/8", "dead:beef::/64",
+			"0.0.0.0/8", "127.0.0.1/32"
 		]
 		prefixes.sort()
 		for prefix in prefixes:
