@@ -151,6 +151,7 @@ static PyTypeObject RadixNode_Type = {
 typedef struct _RadixObject {
 	PyObject_HEAD
 	radix_tree_t *rt;	/* Actual radix tree */
+	int family;		/* XXX - hack until we fix shared v4/v6 trees */
 } RadixObject;
 
 static PyTypeObject Radix_Type;
@@ -166,6 +167,7 @@ newRadixObject(PyObject *arg)
 	if ((self = PyObject_New(RadixObject, &Radix_Type)) == NULL)
 		return (NULL);
 	self->rt = rt;
+	self->family = -1;
 	return (self);
 }
 
@@ -216,6 +218,14 @@ Radix_add(RadixObject *self, PyObject *args)
 		return NULL;
 	if ((prefix = prefix_pton(addr, -1)) == NULL) {
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
+		return NULL;
+	}
+	if (self->family == -1)
+		self->family = prefix->family;
+	else if (prefix->family != self->family) {
+		Deref_Prefix(prefix);
+		PyErr_SetString(PyExc_ValueError,
+		    "Mixing IPv4 and IPv6 in a single tree is not supported");
 		return NULL;
 	}
 	if ((node = radix_lookup(self->rt, prefix)) == NULL) {

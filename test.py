@@ -111,9 +111,8 @@ class TestRadix(unittest.TestCase):
 	def testnodes(self):
 		tree = radix.Radix()
 		prefixes = [
-			"10.0.0.0/8", "127.0.0.1/32", "::1/128",
-			"2000::/16", "10.1.0.0/16", "10.100.100.100/32", 
-#			"0.0.0.0/0", "a00::/8", "::/0"
+			"10.0.0.0/8", "127.0.0.1/32",
+			"10.1.0.0/16", "10.100.100.100/32", 
 		]
 		prefixes.sort()
 		for prefix in prefixes:
@@ -139,9 +138,7 @@ class TestRadix(unittest.TestCase):
 	def testiter(self):
 		tree = radix.Radix()
 		prefixes = [
-			"10.0.0.0/8", "127.0.0.1/32", "::1/128",
-			"2000::/16", "10.1.0.0/16", "10.100.100.100/32", 
-#			"0.0.0.0/0", "a00::/8", "::/0"
+			"::1/128", "2000::/16", "2000::/8", "dead:beef::/64"
 		]
 		prefixes.sort()
 		for prefix in prefixes:
@@ -151,6 +148,11 @@ class TestRadix(unittest.TestCase):
 			iterprefixes.append(node.prefix)
 		iterprefixes.sort()
 		self.assertEqual(iterprefixes, prefixes)
+
+	def testmixbreak(self):
+		tree = radix.Radix()
+		node1 = tree.add("127.0.0.1")
+		self.assertRaises(ValueError, tree.add, "::1")
 
 def main():
 	unittest.main()
