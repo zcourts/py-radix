@@ -1,4 +1,7 @@
 20041122
+ - (djm) Use RFC3849 IPv6 prefixes in documentation
+
+20041122
  - (djm) Raise a RuntimeWarning and abort iteration if the tree changes while
    we are iterating over it
  - (djm) Add new regress tests: nodes() on an empty tree, iterate on an 
