@@ -62,10 +62,6 @@ RadixNode_dealloc(RadixNodeObject *self)
 	PyObject_Del(self);
 }
 
-static PyMethodDef RadixNode_methods[] = {
-	{NULL, NULL} /* no methods */
-};
-
 static PyObject *
 RadixNode_getattr(RadixNodeObject *self, char *name)
 {
@@ -85,7 +81,7 @@ RadixNode_getattr(RadixNodeObject *self, char *name)
 		Py_XINCREF(user_obj);
 		return user_obj;
 	}
-	return Py_FindMethod(RadixNode_methods, (PyObject *)self, name);
+	return NULL;
 }
 
 static int
@@ -402,12 +398,6 @@ static PyMethodDef Radix_methods[] = {
 	{NULL,		NULL}		/* sentinel */
 };
 
-static PyObject *
-Radix_getattr(RadixObject *self, char *name)
-{
-	return Py_FindMethod(Radix_methods, (PyObject *)self, name);
-}
-
 static PyTypeObject Radix_Type = {
 	/* The ob_type field must be initialized in the module init function
 	 * to be portable to Windows without using C++. */
@@ -419,7 +409,7 @@ static PyTypeObject Radix_Type = {
 	/* methods */
 	(destructor)Radix_dealloc, /*tp_dealloc*/
 	0,			/*tp_print*/
-	(getattrfunc)Radix_getattr,/*tp_getattr*/
+	0,			/*tp_getattr*/
 	0,			/*tp_setattr*/
 	0,			/*tp_compare*/
 	0,			/*tp_repr*/
@@ -440,7 +430,7 @@ static PyTypeObject Radix_Type = {
         0,                      /*tp_weaklistoffset*/
         0,                      /*tp_iter*/
         0,                      /*tp_iternext*/
-        0,                      /*tp_methods*/
+        Radix_methods,		/*tp_methods*/
         0,                      /*tp_members*/
         0,                      /*tp_getset*/
         0,                      /*tp_base*/
