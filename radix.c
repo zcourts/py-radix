@@ -73,7 +73,7 @@ comp_with_mask(void *addr, void *dest, u_int mask)
 }
 
 static prefix_t 
-*New_Prefix2(int family, void *dest, int bitlen, prefix_t * prefix)
+*New_Prefix2(int family, void *dest, int bitlen, prefix_t *prefix)
 {
 	int dynamic_allocated = 0;
 	int default_bitlen = 32;
@@ -106,7 +106,7 @@ static prefix_t
 
 
 prefix_t 
-*Ref_Prefix(prefix_t * prefix)
+*Ref_Prefix(prefix_t *prefix)
 {
 	if (prefix == NULL)
 		return (NULL);
@@ -121,7 +121,7 @@ prefix_t
 
 
 void
-Deref_Prefix(prefix_t * prefix)
+Deref_Prefix(prefix_t *prefix)
 {
 	if (prefix == NULL)
 		return;
@@ -167,7 +167,7 @@ radix_tree_t
  */
 
 void
-Clear_Radix(radix_tree_t * radix, void_fn_t func, void *cbctx)
+Clear_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx)
 {
 	if (radix->head) {
 
@@ -205,7 +205,7 @@ Clear_Radix(radix_tree_t * radix, void_fn_t func, void *cbctx)
 
 
 void
-Destroy_Radix(radix_tree_t * radix, void_fn_t func, void *cbctx)
+Destroy_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx)
 {
 	Clear_Radix(radix, func, cbctx);
 	free(radix);
@@ -229,7 +229,7 @@ radix_process(radix_tree_t *radix, void_fn_t func, void *cbctx)
 
 
 radix_node_t
-*radix_search_exact(radix_tree_t * radix, prefix_t * prefix)
+*radix_search_exact(radix_tree_t *radix, prefix_t *prefix)
 {
 	radix_node_t *node;
 	u_char *addr;
@@ -299,7 +299,7 @@ radix_node_t
 
 /* if inclusive != 0, "best" may be the given prefix itself */
 radix_node_t
-*radix_search_best2(radix_tree_t * radix, prefix_t * prefix, int inclusive)
+*radix_search_best2(radix_tree_t *radix, prefix_t *prefix, int inclusive)
 {
 	radix_node_t *node;
 	radix_node_t *stack[RADIX_MAXBITS + 1];
@@ -390,14 +390,14 @@ radix_node_t
 
 
 radix_node_t
-*radix_search_best(radix_tree_t * radix, prefix_t * prefix)
+*radix_search_best(radix_tree_t *radix, prefix_t *prefix)
 {
 	return (radix_search_best2(radix, prefix, 1));
 }
 
 
 radix_node_t
-*radix_lookup(radix_tree_t * radix, prefix_t * prefix)
+*radix_lookup(radix_tree_t *radix, prefix_t *prefix)
 {
 	radix_node_t *node, *new_node, *parent, *glue;
 	u_char *addr, *test_addr;
@@ -601,7 +601,7 @@ radix_node_t
 
 
 void
-radix_remove(radix_tree_t * radix, radix_node_t * node)
+radix_remove(radix_tree_t *radix, radix_node_t *node)
 {
 	radix_node_t *parent, *child;
 
