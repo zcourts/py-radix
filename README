@@ -32,6 +32,13 @@ A simple example that demonstrates most of the features:
 	rnode = rtree.add("10.0.0.0/8")
 	rnode.data["blah"] = "whatever you want"
 
+	# You can specify nodes as CIDR addresses, or networks with
+	# separate mask lengths. The following three invocations are
+	# identical:
+	rnode = rtree.add("10.0.0.0/16")
+	rnode = rtree.add("10.0.0.0", 16)
+	rnode = rtree.add(network = "10.0.0.0", masklen = 16)
+
 	# Exact search will only return prefixes you have entered
 	rnode = rtree.search_exact("10.0.0.0/8")
 	# Get your data back out

@@ -194,24 +194,34 @@ Radix_dealloc(RadixObject *self)
 }
 
 PyDoc_STRVAR(Radix_add_doc,
-"Radix.add(prefix) -> new RadixNode object\n\
+"Radix.add(network[, masklen]) -> new RadixNode object\n\
 \n\
-Adds the network specified by 'prefix' to the radix tree. 'prefix' \n\
-may be an address (indicating a unicast host) or CIDR formatted \n\
-network. Both IPv4 and IPv6 addresses/networks are supported. \n\
-Returns a RadixNode object, which can store arbitrary data.");
+Adds the network specified by 'network' and 'masklen' to the radix\n\
+tree. 'network' may be a string in CIDR format, a unicast host\n\
+address or a network address, with the mask length specified using\n\
+the optional 'masklen' parameter.\n\
+\n\
+Both IPv4 and IPv6 addresses/networks are supported, but not at once\n\
+in the same tree (attempting to do this will raise a ValueError\n\
+exception.\n\
+\n\
+This method returns a RadixNode object. Arbitrary data may be strored\n\
+in the RadixNode.data dict.");
 
 static PyObject *
-Radix_add(RadixObject *self, PyObject *args)
+Radix_add(RadixObject *self, PyObject *args, PyObject *kw_args)
 {
 	char *addr;
 	prefix_t *prefix;
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
 	long prefixlen = -1;
+	static char *keywords[] = { "network", "masklen", NULL };
 
-	if (!PyArg_ParseTuple(args, "s|l:add", &addr, &prefixlen))
+	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "s|l:add", keywords,
+	    &addr, &prefixlen))
 		return NULL;
+
 	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
 		return NULL;
@@ -250,21 +260,22 @@ Radix_add(RadixObject *self, PyObject *args)
 }
 
 PyDoc_STRVAR(Radix_delete_doc,
-"Radix.delete(prefix) -> None\n\
+"Radix.delete(network[, masklen] -> None\n\
 \n\
-Deletes the specified prefix (a unicast address or a CIDR network)\n\
-from the radix tree.");
+Deletes the specified 'network' from the radix tree.");
 
 static PyObject *
-Radix_delete(RadixObject *self, PyObject *args)
+Radix_delete(RadixObject *self, PyObject *args, PyObject *kw_args)
 {
 	char *addr;
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
 	prefix_t *prefix;
 	long prefixlen = -1;
+	static char *keywords[] = { "network", "masklen", NULL };
 
-	if (!PyArg_ParseTuple(args, "s|l:del", &addr, &prefixlen))
+	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "s|l:delete", keywords,
+	    &addr, &prefixlen))
 		return NULL;
 
 	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
@@ -292,24 +303,28 @@ Radix_delete(RadixObject *self, PyObject *args)
 }
 
 PyDoc_STRVAR(Radix_search_exact_doc,
-"Radix.search_exact(prefix) -> RadixNode or None\n\
+"Radix.search_exact(network[, masklen] -> RadixNode or None\n\
 \n\
-Search for the specified 'prefix' (a unicast address or a CIDR\n\
-network) in the radix tree. In order to match, the 'prefix' must\n\
-be specified exactly. Contrast with Radix.search_best. If no match\n\
-is found, then returns None.");
+Search for the specified 'network' in the radix tree. In order to\n\
+match, the 'prefix' must be specified exactly. Contrast with the\n\
+Radix.search_best method.\n\
+\n\
+If no match is found, then this method returns None.");
 
 static PyObject *
-Radix_search_exact(RadixObject *self, PyObject *args)
+Radix_search_exact(RadixObject *self, PyObject *args, PyObject *kw_args)
 {
 	char *addr;
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
 	prefix_t *prefix;
 	long prefixlen = -1;
+	static char *keywords[] = { "network", "masklen", NULL };
 
-	if (!PyArg_ParseTuple(args, "s|l:search_exact", &addr, &prefixlen))
+	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "s|l:search_exact",
+	    keywords, &addr, &prefixlen))
 		return NULL;
+
 	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
 		Deref_Prefix(prefix);
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
@@ -328,24 +343,29 @@ Radix_search_exact(RadixObject *self, PyObject *args)
 }
 
 PyDoc_STRVAR(Radix_search_best_doc,
-"Radix.search_best(prefix) -> None\n\
+"Radix.search_best(network[, masklen] -> None\n\
 \n\
-Search for the specified 'prefix' (a unicast address or a CIDR\n\
-network) in the radix tree. search_best will return the best\n\
-(longest) entry that includes the specified 'prefix'.If no match\n\
-is found, then returns None.");
+Search for the specified 'network' in the radix tree.\n\
+\n\
+search_best will return the best (longest) entry that includes the\n\
+specified 'prefix', much like a IP routing table lookup.\n\
+\n\
+If no match is found, then returns None.");
 
 static PyObject *
-Radix_search_best(RadixObject *self, PyObject *args)
+Radix_search_best(RadixObject *self, PyObject *args, PyObject *kw_args)
 {
 	char *addr;
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
 	prefix_t *prefix;
 	long prefixlen = -1;
+	static char *keywords[] = { "network", "masklen", NULL };
 
-	if (!PyArg_ParseTuple(args, "s|l:search_best", &addr, &prefixlen))
+	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "s|l:search_best",
+	    keywords, &addr, &prefixlen))
 		return NULL;
+
 	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
 		Deref_Prefix(prefix);
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
@@ -428,12 +448,12 @@ Radix_getiter(RadixObject *self)
 PyDoc_STRVAR(Radix_doc, "Radix tree");
 
 static PyMethodDef Radix_methods[] = {
-	{"add",		(PyCFunction)Radix_add,		METH_VARARGS,	Radix_add_doc		},
-	{"delete",	(PyCFunction)Radix_delete,	METH_VARARGS,	Radix_delete_doc	},
-	{"search_exact",(PyCFunction)Radix_search_exact,METH_VARARGS,	Radix_search_exact_doc	},
-	{"search_best",	(PyCFunction)Radix_search_best,	METH_VARARGS,	Radix_search_best_doc	},
-	{"nodes",	(PyCFunction)Radix_nodes,	METH_VARARGS,	Radix_nodes_doc		},
-	{"prefixes",	(PyCFunction)Radix_prefixes,	METH_VARARGS,	Radix_prefixes_doc	},
+	{"add",		(PyCFunction)Radix_add,		METH_VARARGS|METH_KEYWORDS,	Radix_add_doc		},
+	{"delete",	(PyCFunction)Radix_delete,	METH_VARARGS|METH_KEYWORDS,	Radix_delete_doc	},
+	{"search_exact",(PyCFunction)Radix_search_exact,METH_VARARGS|METH_KEYWORDS,	Radix_search_exact_doc	},
+	{"search_best",	(PyCFunction)Radix_search_best,	METH_VARARGS|METH_KEYWORDS,	Radix_search_best_doc	},
+	{"nodes",	(PyCFunction)Radix_nodes,	METH_VARARGS,			Radix_nodes_doc		},
+	{"prefixes",	(PyCFunction)Radix_prefixes,	METH_VARARGS,			Radix_prefixes_doc	},
 	{NULL,		NULL}		/* sentinel */
 };
 
@@ -658,6 +678,13 @@ Simple example:\n\
 	# arbitrary members in its 'data' dict to store your data\n\
 	rnode = rtree.add(\"10.0.0.0/8\")\n\
 	rnode.data[\"blah\"] = \"whatever you want\"\n\
+\n\
+	# You can specify nodes as CIDR addresses, or networks with\n\
+	# separate mask lengths. The following three invocations are\n\
+	# identical:\n\
+	rnode = rtree.add(\"10.0.0.0/16\")\n\
+	rnode = rtree.add(\"10.0.0.0\", 16)\n\
+	rnode = rtree.add(network = \"10.0.0.0\", masklen = 16)\n\
 \n\
 	# Exact search will only return prefixes you have entered\n\
 	rnode = rtree.search_exact(\"10.0.0.0/8\")\n\

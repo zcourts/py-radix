@@ -14,6 +14,8 @@
  - (djm) Implement Radix.prefixes() returning a list of prefix strings
  - (djm) Allow Radix methods to accept separate prefix lengths. E.g. 
     method("xx.xx.xx.xx", yy)
+ - (djm) Support keyword arguments for Radix methods. E.g. 
+   tree.add(network="127.0.0.1", masklen=32)
 
 20041121
  - (djm) Fix a bug: forgot to set the exception type when trying to get 

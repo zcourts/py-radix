@@ -37,10 +37,13 @@ class TestRadix(unittest.TestCase):
 		node = tree.add("10.0.0.0", 16)
 		self.assertEqual(node.network, "10.0.0.0")
 		self.assertEqual(node.prefixlen, 16)
+		node = tree.add(network = "10.0.0.0", masklen = 24)
+		self.assertEqual(node.network, "10.0.0.0")
+		self.assertEqual(node.prefixlen, 24)
 
 	def test_02__node_userdata(self):
 		tree = radix.Radix()
-		node = tree.add("10.0.0.0/8")
+		node = tree.add(network = "10.0.0.0", masklen=28)
 		node.data["blah"] = "abc123"
 		node.data["foo"] = 12345
 		self.assertEqual(node.data["blah"], "abc123")
