@@ -366,21 +366,6 @@ Radix_search_best(RadixObject *self, PyObject *args)
 	return (PyObject *)node_obj;
 }
 
-struct walk_ctx {
-	RadixObject *self;
-	PyObject *ret;
-};
-
-static void
-nodes_helper(radix_node_t *rn, void *cbctx)
-{
-	struct walk_ctx *ctx = (struct walk_ctx *)cbctx;
-	RadixNodeObject *node_obj;
-
-	if (rn->data != NULL)
-		PyList_Append(ctx->ret, (PyObject *)rn->data);
-}
-
 PyDoc_STRVAR(Radix_nodes_doc,
 "Radix.nodes(prefix) -> List of RadixNode\n\
 \n\
@@ -391,16 +376,21 @@ been entered.");
 static PyObject *
 Radix_nodes(RadixObject *self, PyObject *args)
 {
-	struct walk_ctx cbctx;
+	radix_node_t *node;
+	PyObject *ret;
 
 	if (!PyArg_ParseTuple(args, ":nodes"))
 		return NULL;
 
-	cbctx.self = self;
-	cbctx.ret = PyList_New(0);
-	radix_process(self->rt, nodes_helper, &cbctx);
+	if ((ret = PyList_New(0)) == NULL)
+		return NULL;
 
-	return (cbctx.ret);
+	RADIX_WALK(self->rt->head, node) {
+		if (node->data != NULL)
+			PyList_Append(ret, (PyObject *)node->data);
+	} RADIX_WALK_END;
+
+	return (ret);
 }
 
 static PyObject *
