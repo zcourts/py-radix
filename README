@@ -20,7 +20,7 @@ Please report bugs to Damien Miller <djm@mindrot.org>. Please check the TODO
 file first, in case your problem is something I already know about (please
 send patches!)
 
-A simple example, that demonstrates most of the features:
+A simple example that demonstrates most of the features:
 
 	import radix
 
