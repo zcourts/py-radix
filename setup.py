@@ -19,7 +19,7 @@
 import sys
 from distutils.core import setup, Extension
 
-VERSION = "0.1"
+VERSION = "0.2"
 
 if __name__ == '__main__':
 	radix = Extension('radix',
@@ -29,10 +29,15 @@ if __name__ == '__main__':
 		version = VERSION,
 		author = "Damien Miller",
 		author_email = "djm@mindrot.org",
-		url = "http://www.mindrot.org/XXX.html",
-		description = "XXX",
+		url = "http://www.mindrot.org/py-radix.html",
+		description = "Radix tree implementation",
 		long_description = """\
-XXX
+py-radix is an implementation of a radix tree data structure for the storage 
+and retrieval of IPv4 and IPv6 network prefixes.
+
+The radix tree is the data structure most commonly used for routing table 
+lookups. It efficiently stores network prefixes of varying lengths and 
+allows fast lookups of containing networks.
 """,
 		license = "BSD",
 		ext_modules = [radix]

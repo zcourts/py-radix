@@ -10,6 +10,7 @@
    functions
  - (djm) Add RadixNode docstring
  - (djm) Add iterator support
+ - (djm) Flesh out setup.py and add correct URL
 
 20041118
  - (djm) Start the changelog
