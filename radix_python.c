@@ -362,7 +362,7 @@ Radix_search_best(RadixObject *self, PyObject *args)
 PyDoc_STRVAR(Radix_nodes_doc,
 "Radix.nodes(prefix) -> List of RadixNode\n\
 \n\
-Returns a list containing RadixNode for each prefix that has been\n\
+Returns a list containing all the RadixNode objects that have been\n\
 entered into the tree. This list may be empty if no prefixes have\n\
 been entered.");
 
@@ -386,6 +386,35 @@ Radix_nodes(RadixObject *self, PyObject *args)
 	return (ret);
 }
 
+PyDoc_STRVAR(Radix_prefixes_doc,
+"Radix.prefixes(prefix) -> List of prefix strings\n\
+\n\
+Returns a list containing all the prefixes that have been entered\n\
+into the tree. This list may be empty if no prefixes have been\n\
+entered.");
+
+static PyObject *
+Radix_prefixes(RadixObject *self, PyObject *args)
+{
+	radix_node_t *node;
+	PyObject *ret;
+
+	if (!PyArg_ParseTuple(args, ":prefixes"))
+		return NULL;
+
+	if ((ret = PyList_New(0)) == NULL)
+		return NULL;
+
+	RADIX_WALK(self->rt->head, node) {
+		if (node->data != NULL) {
+			PyList_Append(ret,
+			    ((RadixNodeObject *)node->data)->prefix);
+		}
+	} RADIX_WALK_END;
+
+	return (ret);
+}
+
 static PyObject *
 Radix_getiter(RadixObject *self)
 {
@@ -400,6 +429,7 @@ static PyMethodDef Radix_methods[] = {
 	{"search_exact",(PyCFunction)Radix_search_exact,METH_VARARGS,	Radix_search_exact_doc	},
 	{"search_best",	(PyCFunction)Radix_search_best,	METH_VARARGS,	Radix_search_best_doc	},
 	{"nodes",	(PyCFunction)Radix_nodes,	METH_VARARGS,	Radix_nodes_doc		},
+	{"prefixes",	(PyCFunction)Radix_prefixes,	METH_VARARGS,	Radix_prefixes_doc	},
 	{NULL,		NULL}		/* sentinel */
 };
 
@@ -647,10 +677,15 @@ Simple example:\n\
 	rnode = rtree.add(\"2001:200::/32\")\n\
 	rnode = rtree.add(\"::/0\")\n\
 \n\
-	# Use the nodes() function to return all prefixes entered\n\
+	# Use the nodes() method to return all RadixNodes created\n\
 	nodes = rtree.nodes()\n\
 	for rnode in nodes:\n\
   		print rnode.prefix\n\
+\n\
+	# The prefixes() method will return all the prefixes (as a\n\
+	# list of strings) that have been entered\n\
+	prefixes = rtree.prefixes()\n\
+	num_prefixes = reduce(lambda x,y: x+1, prefixes, 0)\n\
 \n\
 	# You can also directly iterate over the tree itself\n\
 	# this would save some memory if the tree is big\n\

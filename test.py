@@ -129,20 +129,38 @@ class TestRadix(unittest.TestCase):
 		nodes = tree.nodes()
 		self.assertEqual(nodes, [])
 
-	def test_09__use_after_free(self):
+	def test_09__prefixes(self):
+		tree = radix.Radix()
+		prefixes = [
+			"10.0.0.0/8", "127.0.0.1/32",
+			"10.1.0.0/16", "10.100.100.100/32", 
+		]
+		prefixes.sort()
+		for prefix in prefixes:
+			tree.add(prefix)
+		addrs = tree.prefixes()
+		addrs.sort()
+		self.assertEqual(addrs, prefixes)
+
+	def test_10__use_after_free(self):
 		tree = radix.Radix()
 		node1 = tree.add("10.0.0.0/8")
 		del tree
 		self.assertEquals(node1.prefix, "10.0.0.0/8")
 
-	def test_10__unique_instance(self):
+	def test_11__unique_instance(self):
 		tree = radix.Radix()
 		node1 = tree.add("10.0.0.0/8")
 		node2 = tree.add("10.0.0.0/8")
 		self.assert_(node1 is node2)
 		self.assert_(node1.prefix is node2.prefix)	
 
-	def test_11__iterator(self):
+	def test_12__mixed_address_family(self):
+		tree = radix.Radix()
+		node1 = tree.add("127.0.0.1")
+		self.assertRaises(ValueError, tree.add, "::1")
+
+	def test_13__iterator(self):
 		tree = radix.Radix()
 		prefixes = [
 			"::1/128", "2000::/16", "2000::/8", "dead:beef::/64"
@@ -156,14 +174,14 @@ class TestRadix(unittest.TestCase):
 		iterprefixes.sort()
 		self.assertEqual(iterprefixes, prefixes)
 
-	def test_12__iterate_on_empty(self):
+	def test_14__iterate_on_empty(self):
 		tree = radix.Radix()
 		prefixes = []
 		for node in tree:
 			prefixes.append(node.prefix)
 		self.assertEqual(prefixes, [])
 
-	def test_13__iterate_and_modify_tree(self):
+	def test_15__iterate_and_modify_tree(self):
 		tree = radix.Radix()
 		prefixes = [
 			"::1/128", "2000::/16", "2000::/8", "dead:beef::/64"
@@ -173,12 +191,7 @@ class TestRadix(unittest.TestCase):
 			tree.add(prefix)
 		self.assertRaises(RuntimeWarning, map, lambda x: tree.delete(x.prefix), tree)
 
-	def test_14__mixed_address_family(self):
-		tree = radix.Radix()
-		node1 = tree.add("127.0.0.1")
-		self.assertRaises(ValueError, tree.add, "::1")
-
-	def test_15__lots_of_prefixes(self):
+	def test_16__lots_of_prefixes(self):
 		tree = radix.Radix()
 		num_nodes_in = 0
 		for i in range(0,128):
