@@ -262,24 +262,8 @@ radix_node_t
 	while (node->bit < bitlen) {
 
 		if (BIT_TEST(addr[node->bit >> 3], 0x80 >> (node->bit & 0x07))) {
-#ifdef RADIX_DEBUG
-			if (node->prefix)
-				fprintf(stderr, "radix_search_exact: take right %s/%d\n",
-					prefix_toa(node->prefix), node->prefix->bitlen);
-			else
-				fprintf(stderr, "radix_search_exact: take right at %d\n",
-					node->bit);
-#endif				/* RADIX_DEBUG */
 			node = node->r;
 		} else {
-#ifdef RADIX_DEBUG
-			if (node->prefix)
-				fprintf(stderr, "radix_search_exact: take left %s/%d\n",
-					prefix_toa(node->prefix), node->prefix->bitlen);
-			else
-				fprintf(stderr, "radix_search_exact: take left at %d\n",
-					node->bit);
-#endif				/* RADIX_DEBUG */
 			node = node->l;
 		}
 
@@ -287,23 +271,12 @@ radix_node_t
 			return (NULL);
 	}
 
-#ifdef RADIX_DEBUG
-	if (node->prefix)
-		fprintf(stderr, "radix_search_exact: stop at %s/%d\n",
-			prefix_toa(node->prefix), node->prefix->bitlen);
-	else
-		fprintf(stderr, "radix_search_exact: stop at %d\n", node->bit);
-#endif				/* RADIX_DEBUG */
 	if (node->bit > bitlen || node->prefix == NULL)
 		return (NULL);
 	assert(node->bit == bitlen);
 	assert(node->bit == node->prefix->bitlen);
 	if (comp_with_mask(prefix_tochar(node->prefix), prefix_tochar(prefix),
 			   bitlen)) {
-#ifdef RADIX_DEBUG
-		fprintf(stderr, "radix_search_exact: found %s/%d\n",
-			prefix_toa(node->prefix), node->prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 		return (node);
 	}
 	return (NULL);
@@ -334,31 +307,11 @@ static radix_node_t
 	while (node->bit < bitlen) {
 
 		if (node->prefix) {
-#ifdef RADIX_DEBUG
-			fprintf(stderr, "radix_search_best: push %s/%d\n",
-			    prefix_toa(node->prefix), node->prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 			stack[cnt++] = node;
 		}
 		if (BIT_TEST(addr[node->bit >> 3], 0x80 >> (node->bit & 0x07))) {
-#ifdef RADIX_DEBUG
-			if (node->prefix)
-				fprintf(stderr, "radix_search_best: take right %s/%d\n",
-					prefix_toa(node->prefix), node->prefix->bitlen);
-			else
-				fprintf(stderr, "radix_search_best: take right at %d\n",
-					node->bit);
-#endif				/* RADIX_DEBUG */
 			node = node->r;
 		} else {
-#ifdef RADIX_DEBUG
-			if (node->prefix)
-				fprintf(stderr, "radix_search_best: take left %s/%d\n",
-					prefix_toa(node->prefix), node->prefix->bitlen);
-			else
-				fprintf(stderr, "radix_search_best: take left at %d\n",
-					node->bit);
-#endif				/* RADIX_DEBUG */
 			node = node->l;
 		}
 
@@ -369,32 +322,15 @@ static radix_node_t
 	if (inclusive && node && node->prefix)
 		stack[cnt++] = node;
 
-#ifdef RADIX_DEBUG
-	if (node == NULL)
-		fprintf(stderr, "radix_search_best: stop at null\n");
-	else if (node->prefix)
-		fprintf(stderr, "radix_search_best: stop at %s/%d\n",
-			prefix_toa(node->prefix), node->prefix->bitlen);
-	else
-		fprintf(stderr, "radix_search_best: stop at %d\n", node->bit);
-#endif				/* RADIX_DEBUG */
 
 	if (cnt <= 0)
 		return (NULL);
 
 	while (--cnt >= 0) {
 		node = stack[cnt];
-#ifdef RADIX_DEBUG
-		fprintf(stderr, "radix_search_best: pop %s/%d\n",
-			prefix_toa(node->prefix), node->prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 		if (comp_with_mask(prefix_tochar(node->prefix),
 				   prefix_tochar(prefix),
 				   node->prefix->bitlen)) {
-#ifdef RADIX_DEBUG
-			fprintf(stderr, "radix_search_best: found %s/%d\n",
-			    prefix_toa(node->prefix), node->prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 			return (node);
 		}
 	}
@@ -430,10 +366,6 @@ radix_node_t
 		node->l = node->r = NULL;
 		node->data = NULL;
 		radix->head = node;
-#ifdef RADIX_DEBUG
-		fprintf(stderr, "radix_lookup: new_node #0 %s/%d (head)\n",
-			prefix_toa(prefix), prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 		radix->num_active_node++;
 		return (node);
 	}
@@ -447,24 +379,10 @@ radix_node_t
 		BIT_TEST(addr[node->bit >> 3], 0x80 >> (node->bit & 0x07))) {
 			if (node->r == NULL)
 				break;
-#ifdef RADIX_DEBUG
-			if (node->prefix)
-				fprintf(stderr, "radix_lookup: take right %s/%d\n",
-					prefix_toa(node->prefix), node->prefix->bitlen);
-			else
-				fprintf(stderr, "radix_lookup: take right at %d\n", node->bit);
-#endif				/* RADIX_DEBUG */
 			node = node->r;
 		} else {
 			if (node->l == NULL)
 				break;
-#ifdef RADIX_DEBUG
-			if (node->prefix)
-				fprintf(stderr, "radix_lookup: take left %s/%d\n",
-					prefix_toa(node->prefix), node->prefix->bitlen);
-			else
-				fprintf(stderr, "radix_lookup: take left at %d\n", node->bit);
-#endif				/* RADIX_DEBUG */
 			node = node->l;
 		}
 
@@ -472,10 +390,6 @@ radix_node_t
 	}
 
 	assert(node->prefix);
-#ifdef RADIX_DEBUG
-	fprintf(stderr, "radix_lookup: stop at %s/%d\n",
-		prefix_toa(node->prefix), node->prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 
 	test_addr = prefix_touchar(node->prefix);
 	/* find the first bit different */
@@ -498,36 +412,18 @@ radix_node_t
 	}
 	if (differ_bit > check_bit)
 		differ_bit = check_bit;
-#ifdef RADIX_DEBUG
-	fprintf(stderr, "radix_lookup: differ_bit %d\n", differ_bit);
-#endif				/* RADIX_DEBUG */
 
 	parent = node->parent;
 	while (parent && parent->bit >= differ_bit) {
 		node = parent;
 		parent = node->parent;
-#ifdef RADIX_DEBUG
-		if (node->prefix)
-			fprintf(stderr, "radix_lookup: up to %s/%d\n",
-			    prefix_toa(node->prefix), node->prefix->bitlen);
-		else
-			fprintf(stderr, "radix_lookup: up to %d\n", node->bit);
-#endif				/* RADIX_DEBUG */
 	}
 
 	if (differ_bit == bitlen && node->bit == bitlen) {
 		if (node->prefix) {
-#ifdef RADIX_DEBUG
-			fprintf(stderr, "radix_lookup: found %s/%d\n",
-			    prefix_toa(node->prefix), node->prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 			return (node);
 		}
 		node->prefix = Ref_Prefix(prefix);
-#ifdef RADIX_DEBUG
-		fprintf(stderr, "radix_lookup: new node #1 %s/%d (glue mod)\n",
-			prefix_toa(prefix), prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 		assert(node->data == NULL);
 		return (node);
 	}
@@ -550,10 +446,6 @@ radix_node_t
 			assert(node->l == NULL);
 			node->l = new_node;
 		}
-#ifdef RADIX_DEBUG
-		fprintf(stderr, "radix_lookup: new_node #2 %s/%d (child)\n",
-			prefix_toa(prefix), prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 		return (new_node);
 	}
 	if (bitlen == differ_bit) {
@@ -573,10 +465,6 @@ radix_node_t
 			node->parent->l = new_node;
 		}
 		node->parent = new_node;
-#ifdef RADIX_DEBUG
-		fprintf(stderr, "radix_lookup: new_node #3 %s/%d (parent)\n",
-			prefix_toa(prefix), prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 	} else {
 		if ((glue = calloc(1, sizeof(*glue))) == NULL)
 			return (NULL);
@@ -604,10 +492,6 @@ radix_node_t
 			node->parent->l = glue;
 		}
 		node->parent = glue;
-#ifdef RADIX_DEBUG
-		fprintf(stderr, "radix_lookup: new_node #4 %s/%d (glue+node)\n",
-			prefix_toa(prefix), prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 	}
 	return (new_node);
 }
@@ -622,10 +506,6 @@ radix_remove(radix_tree_t *radix, radix_node_t *node)
 	assert(node);
 
 	if (node->r && node->l) {
-#ifdef RADIX_DEBUG
-		fprintf(stderr, "radix_remove: #0 %s/%d (r & l)\n",
-			prefix_toa(node->prefix), node->prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 
 		/*
 		 * this might be a placeholder node -- have to check and make
@@ -639,10 +519,6 @@ radix_remove(radix_tree_t *radix, radix_node_t *node)
 		return;
 	}
 	if (node->r == NULL && node->l == NULL) {
-#ifdef RADIX_DEBUG
-		fprintf(stderr, "radix_remove: #1 %s/%d (!r & !l)\n",
-			prefix_toa(node->prefix), node->prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 		parent = node->parent;
 		Deref_Prefix(node->prefix);
 		free(node);
@@ -681,10 +557,6 @@ radix_remove(radix_tree_t *radix, radix_node_t *node)
 		radix->num_active_node--;
 		return;
 	}
-#ifdef RADIX_DEBUG
-	fprintf(stderr, "radix_remove: #2 %s/%d (r ^ l)\n",
-		prefix_toa(node->prefix), node->prefix->bitlen);
-#endif				/* RADIX_DEBUG */
 	if (node->r) {
 		child = node->r;
 	} else {
