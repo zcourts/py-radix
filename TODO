@@ -12,4 +12,6 @@ tree.search_all_containing(network) -> [ network, network ] (sorted by prefix)
 tree.search_containing(network) -> RadixNode or None
  Find the prefix containing 'network', not including an exact match. 
 
+tree.num_prefixes()
+
 $Id$

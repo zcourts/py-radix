@@ -787,6 +787,7 @@ Simple example:\n\
 	print rnode.prefix	# -> \"10.0.0.0/8\"\n\
 	print rnode.prefixlen	# -> 8\n\
 	print rnode.family	# -> socket.AF_INET\n\
+	print rnode.packed	# -> '\\n\\x00\\x00\\x00'\n\
 \n\
 	# IPv6 prefixes are fully supported in the same tree\n\
 	rnode = rtree.add(\"2001:DB8::/32\")\n\
@@ -800,13 +801,13 @@ Simple example:\n\
 	# The prefixes() method will return all the prefixes (as a\n\
 	# list of strings) that have been entered\n\
 	prefixes = rtree.prefixes()\n\
-	num_prefixes = reduce(lambda x,y: x+1, prefixes, 0)\n\
 \n\
 	# You can also directly iterate over the tree itself\n\
 	# this would save some memory if the tree is big\n\
 	# NB. Don't modify the tree (add or delete nodes) while\n\
 	# iterating otherwise you will abort the iteration and\n\
-	# receive a RuntimeWarning.\n\
+	# receive a RuntimeWarning. Changing a node's data dict\n\
+	# is permitted.\n\
 	for rnode in rtree:\n\
   		print rnode.prefix\n\
 ");
