@@ -97,6 +97,8 @@ static PyMemberDef RadixNode_members[] = {
 	{NULL}
 };
 
+PyDoc_STRVAR(RadixNode_doc, 
+"Node in a radix tree");
 
 static PyTypeObject RadixNode_Type = {
 	/* The ob_type field must be initialized in the module init function
@@ -123,7 +125,7 @@ static PyTypeObject RadixNode_Type = {
 	0,			/*tp_setattro*/
 	0,			/*tp_as_buffer*/
 	Py_TPFLAGS_DEFAULT,	/*tp_flags*/
-	0,			/*tp_doc*/
+	RadixNode_doc,		/*tp_doc*/
 	0,			/*tp_traverse*/
 	0,			/*tp_clear*/
 	0,			/*tp_richcompare*/
