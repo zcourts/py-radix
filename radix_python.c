@@ -44,7 +44,6 @@ newRadixNodeObject(PyObject *arg)
 		return NULL;
 	self->user_attr = NULL;
 	self->rn = NULL;
-	fprintf(stderr, "%s: create %p\n", __func__, self);
 	return self;
 }
 
@@ -53,8 +52,6 @@ newRadixNodeObject(PyObject *arg)
 static void
 RadixNode_dealloc(RadixNodeObject *self)
 {
-	fprintf(stderr, "%s: %p %p %p %p\n", __func__, self, self->prefix, self->rn, self->user_attr);
-
 	if (self->network != NULL)
 		free(self->network);
 	if (self->prefix != NULL)
@@ -73,7 +70,6 @@ static PyObject *
 RadixNode_getattr(RadixNodeObject *self, char *name)
 {
 	PyObject *user_obj;
-	fprintf(stderr, "%s: %s\n", __func__, name);
 
 	if (strcmp(name, "network") == 0)
 		return PyString_FromString(self->network);
@@ -214,7 +210,6 @@ rt_dealloc_cb(radix_node_t *rn, void *cbctx)
 static void
 Radix_dealloc(RadixObject *self)
 {
-	fprintf(stderr, "%s: %p %p %p %p\n", __func__, self, self->rt);
 	Destroy_Radix(self->rt, rt_dealloc_cb, NULL);
 	PyObject_Del(self);
 }
@@ -239,7 +234,6 @@ Radix_add(RadixObject *self, PyObject *args)
 		return NULL;
 	}
 	Deref_Prefix(prefix);
-	fprintf(stderr, "Lookup addr %s -> %p\n", addr, node);
 
 	/*
 	 * Create a RadixNode object in the data area of the node
@@ -269,18 +263,15 @@ Radix_add(RadixObject *self, PyObject *args)
 			return NULL;
 		}
 		node->data = node_obj;
-		fprintf(stderr, "%s: create %p\n", __func__, node_obj);
-	} else {
-		fprintf(stderr, "Got existing obj\n");
+	} else
 		node_obj = node->data;
-	}
 
 	Py_XINCREF(node_obj);
 	return (PyObject *)node_obj;
 }
 
 static PyObject *
-Radix_del(RadixObject *self, PyObject *args)
+Radix_delete(RadixObject *self, PyObject *args)
 {
 	char *addr;
 	radix_node_t *node;
@@ -305,7 +296,6 @@ Radix_del(RadixObject *self, PyObject *args)
 		node_obj = node->data;
 		node_obj->rn = NULL;
 		Py_XDECREF(node_obj);
-		fprintf(stderr, "%s: destroy %p\n", __func__, node_obj);
 	}
 
 	radix_remove(self->rt, node);
@@ -368,49 +358,47 @@ Radix_search_best(RadixObject *self, PyObject *args)
 	return (PyObject *)node_obj;
 }
 
-#if 0
 struct walk_ctx {
 	RadixObject *self;
+	PyObject *ret;
 };
 
 static void
-walk_helper(radix_node_t *rn, void *cbctx)
+nodes_helper(radix_node_t *rn, void *cbctx)
 {
-	PyObject *arglist, *result;
 	struct walk_ctx *ctx = (struct walk_ctx *)cbctx;
+	RadixNodeObject *node_obj;
 
-	arglist = Py_BuildValue("(i)", XXX);
-	result = PyEval_CallObject(callback, arglist);
-	Py_DECREF(arglist);	
-
-	if (result == NULL)
-		return (NULL);
-
-	/* XXX Otherwise push result into list */
+	if (rn->data != NULL)
+		PyList_Append(ctx->ret, (PyObject *)rn->data);
 }
 
 static PyObject *
-Radix_walk(RadixObject *self, PyObject *args)
+Radix_nodes(RadixObject *self, PyObject *args)
 {
-	PyObject *callback = NULL;
+	struct walk_ctx cbctx;
 
-	if (!PyArg_ParseTuple(args, ":search_best"))
+	if (!PyArg_ParseTuple(args, ":nodes"))
 		return NULL;
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	cbctx.self = self;
+	cbctx.ret = PyList_New(0);
+	radix_process(self->rt, nodes_helper, &cbctx);
+
+	return (cbctx.ret);
 }
-#endif
 
 static PyMethodDef Radix_methods[] = {
 	{"add",		(PyCFunction)Radix_add,		METH_VARARGS,
 		PyDoc_STR("add() -> XXX")},
-	{"del",		(PyCFunction)Radix_del,		METH_VARARGS,
+	{"delete",	(PyCFunction)Radix_delete,	METH_VARARGS,
 		PyDoc_STR("del() -> XXX")},
 	{"search_exact",(PyCFunction)Radix_search_exact,METH_VARARGS,
 		PyDoc_STR("search_exact() -> XXX")},
 	{"search_best",	(PyCFunction)Radix_search_best,	METH_VARARGS,
 		PyDoc_STR("search_best() -> XXX")},
+	{"nodes",	(PyCFunction)Radix_nodes,	METH_VARARGS,
+		PyDoc_STR("nodes() -> XXX")},
 	{NULL,		NULL}		/* sentinel */
 };
 
