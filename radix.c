@@ -570,14 +570,14 @@ prefix_t
 	case AF_INET:
 		if (len == -1)
 			len = 32;
-		else if (len > 32)
+		else if (len < 0 || len > 32)
 			goto out;
 		addr = &((struct sockaddr_in *) ai->ai_addr)->sin_addr;
 		break;
 	case AF_INET6:
 		if (len == -1)
 			len = 128;
-		else if (len > 128)
+		else if (len < 0 || len > 128)
 			goto out;
 		addr = &((struct sockaddr_in6 *) ai->ai_addr)->sin6_addr;
 		break;

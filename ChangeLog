@@ -12,6 +12,8 @@
  - (djm) KNF radix.c (more remains)
  - (djm) Kill asserts() in radix.c, more KNF (starting to be readable now)
  - (djm) Implement Radix.prefixes() returning a list of prefix strings
+ - (djm) Allow Radix methods to accept separate prefix lengths. E.g. 
+    method("xx.xx.xx.xx", yy)
 
 20041121
  - (djm) Fix a bug: forgot to set the exception type when trying to get 

@@ -34,6 +34,9 @@ class TestRadix(unittest.TestCase):
 		self.assertEqual(node.network, "10.0.0.0")
 		self.assertEqual(node.prefixlen, 8)
 		self.assertEqual(node.family, socket.AF_INET)
+		node = tree.add("10.0.0.0", 16)
+		self.assertEqual(node.network, "10.0.0.0")
+		self.assertEqual(node.prefixlen, 16)
 
 	def test_02__node_userdata(self):
 		tree = radix.Radix()
@@ -196,7 +199,8 @@ class TestRadix(unittest.TestCase):
 		num_nodes_in = 0
 		for i in range(0,128):
 			for j in range(0,128):
-				node = tree.add("1.%d.%d.0/24" % (i, j))
+				k = ((i + j) % 8) + 24
+				node = tree.add("1.%d.%d.0" % (i, j), k)
 				node.data["i"] = i
 				node.data["j"] = j
 				num_nodes_in += 1
@@ -204,14 +208,16 @@ class TestRadix(unittest.TestCase):
 		num_nodes_del = 0
 		for i in range(0,128,5):
 			for j in range(0,128,3):
-				tree.delete("1.%d.%d.0/24" % (i, j))
+				k = ((i + j) % 8) + 24
+				tree.delete("1.%d.%d.0" % (i, j), k)
 				num_nodes_del += 1
 
 		num_nodes_out = 0
 		for node in tree:
 			i = node.data["i"]
 			j = node.data["j"]
-			prefix = "1.%d.%d.0/24" % (i, j)
+			k = ((i + j) % 8) + 24
+			prefix = "1.%d.%d.0/%d" % (i, j, k)
 			self.assertEquals(node.prefix, prefix)
 			num_nodes_out += 1
 

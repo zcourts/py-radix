@@ -208,10 +208,11 @@ Radix_add(RadixObject *self, PyObject *args)
 	prefix_t *prefix;
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
+	long prefixlen = -1;
 
-	if (!PyArg_ParseTuple(args, "s:add", &addr))
+	if (!PyArg_ParseTuple(args, "s|l:add", &addr, &prefixlen))
 		return NULL;
-	if ((prefix = prefix_pton(addr, -1)) == NULL) {
+	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
 		return NULL;
 	}
@@ -261,11 +262,12 @@ Radix_delete(RadixObject *self, PyObject *args)
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
 	prefix_t *prefix;
+	long prefixlen = -1;
 
-	if (!PyArg_ParseTuple(args, "s:del", &addr))
+	if (!PyArg_ParseTuple(args, "s|l:del", &addr, &prefixlen))
 		return NULL;
 
-	if ((prefix = prefix_pton(addr, -1)) == NULL) {
+	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
 		Deref_Prefix(prefix);
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
 		return NULL;
@@ -304,10 +306,11 @@ Radix_search_exact(RadixObject *self, PyObject *args)
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
 	prefix_t *prefix;
+	long prefixlen = -1;
 
-	if (!PyArg_ParseTuple(args, "s:search_exact", &addr))
+	if (!PyArg_ParseTuple(args, "s|l:search_exact", &addr, &prefixlen))
 		return NULL;
-	if ((prefix = prefix_pton(addr, -1)) == NULL) {
+	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
 		Deref_Prefix(prefix);
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
 		return NULL;
@@ -339,10 +342,11 @@ Radix_search_best(RadixObject *self, PyObject *args)
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
 	prefix_t *prefix;
+	long prefixlen = -1;
 
-	if (!PyArg_ParseTuple(args, "s:search_best", &addr))
+	if (!PyArg_ParseTuple(args, "s|l:search_best", &addr, &prefixlen))
 		return NULL;
-	if ((prefix = prefix_pton(addr, -1)) == NULL) {
+	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
 		Deref_Prefix(prefix);
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
 		return NULL;
