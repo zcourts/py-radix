@@ -82,12 +82,6 @@ RadixNode_dealloc(RadixNodeObject *self)
 	PyObject_Del(self);
 }
 
-	PyObject *user_attr;	/* User-specified attributes */
-	PyObject *network;
-	PyObject *prefix;
-	PyObject *prefixlen;
-	PyObject *family;
-
 static PyMemberDef RadixNode_members[] = {
 	{"data",	T_OBJECT, offsetof(RadixNodeObject, user_attr),	READONLY},
 	{"network",	T_OBJECT, offsetof(RadixNodeObject, network),	READONLY},
