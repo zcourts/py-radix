@@ -36,6 +36,7 @@ typedef struct {
 	PyObject *prefix;
 	PyObject *prefixlen;
 	PyObject *family;
+	PyObject *packed;
 	radix_node_t *rn;	/* Actual radix node (pointer to parent) */
 } RadixNodeObject;
 
@@ -46,6 +47,11 @@ newRadixNodeObject(radix_node_t *rn)
 {
 	RadixNodeObject *self;
 	char network[256], prefix[256];
+
+	/* Sanity check */
+	if (rn == NULL || rn->prefix == NULL || 
+	    (rn->prefix->family != AF_INET && rn->prefix->family != AF_INET6))
+		return NULL;
 
 	self = PyObject_New(RadixNodeObject, &RadixNode_Type);
 	if (self == NULL)
@@ -62,7 +68,9 @@ newRadixNodeObject(radix_node_t *rn)
 	self->prefix = PyString_FromString(prefix);
 	self->prefixlen = PyInt_FromLong(rn->prefix->bitlen);
 	self->family = PyInt_FromLong(rn->prefix->family);
-	
+	self->packed = PyString_FromStringAndSize((u_char*)&rn->prefix->add,
+	    rn->prefix->family == AF_INET ? 4 : 16);
+
 	if (self->user_attr == NULL || self->prefixlen == NULL || 
 	    self->family == NULL || self->network == NULL || 
 	    self->prefix == NULL) {
@@ -93,6 +101,7 @@ static PyMemberDef RadixNode_members[] = {
 	{"prefix",	T_OBJECT, offsetof(RadixNodeObject, prefix),	READONLY},
 	{"prefixlen",	T_OBJECT, offsetof(RadixNodeObject, prefixlen),	READONLY},
 	{"family",	T_OBJECT, offsetof(RadixNodeObject, family),	READONLY},
+	{"packed",	T_OBJECT, offsetof(RadixNodeObject, packed),	READONLY},
 	{NULL}
 };
 
@@ -192,14 +201,56 @@ Radix_dealloc(RadixObject *self)
 	Destroy_Radix(self->rt, NULL, NULL);
 	PyObject_Del(self);
 }
+static prefix_t
+*args_to_prefix(char *addr, char *packed, int packlen, long prefixlen)
+{
+	prefix_t *prefix;
+
+	if (addr != NULL && packed != NULL) {
+		PyErr_SetString(PyExc_TypeError,
+			    "Two address types specified. Please pick one.");
+		return NULL;
+	}
+
+	if (addr == NULL && packed == NULL) {
+		PyErr_SetString(PyExc_TypeError,
+			    "No address specified (use 'address' or 'packed')");
+		return NULL;
+	}
+
+	/* Parse a string address */
+	if (addr != NULL) {
+		if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
+			PyErr_SetString(PyExc_ValueError,
+			    "Invalid address format");
+		}
+		return prefix;
+	}
+
+	/* "parse" a packed binary address */
+	if (packed != NULL) {
+		if ((prefix = prefix_from_blob(packed, packlen, 
+		    prefixlen)) == NULL) {
+			PyErr_SetString(PyExc_ValueError,
+			    "Invalid packed address format");
+		}
+		return prefix;
+	}
+	/* NOTREACHED */
+}
 
 PyDoc_STRVAR(Radix_add_doc,
-"Radix.add(network[, masklen]) -> new RadixNode object\n\
+"Radix.add(network[, masklen][, packed]) -> new RadixNode object\n\
 \n\
 Adds the network specified by 'network' and 'masklen' to the radix\n\
 tree. 'network' may be a string in CIDR format, a unicast host\n\
 address or a network address, with the mask length specified using\n\
 the optional 'masklen' parameter.\n\
+\n\
+Alternately, the address may be specified in a packed binary format\n\
+using the 'packed' keyword argument (instead of 'network'). This is\n\
+useful with binary addresses returned by socket.getpeername(),\n\
+socket.inet_ntoa(), etc.\n\
 \n\
 Both IPv4 and IPv6 addresses/networks are supported, but not at once\n\
 in the same tree (attempting to do this will raise a ValueError\n\
@@ -211,21 +262,21 @@ in the RadixNode.data dict.");
 static PyObject *
 Radix_add(RadixObject *self, PyObject *args, PyObject *kw_args)
 {
-	char *addr;
 	prefix_t *prefix;
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
+	static char *keywords[] = { "network", "masklen", "packed", NULL };
+
+	char *addr = NULL, *packed = NULL;
 	long prefixlen = -1;
-	static char *keywords[] = { "network", "masklen", NULL };
+	int packlen = -1;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "s|l:add", keywords,
-	    &addr, &prefixlen))
+	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "|sls#:add", keywords,
+	    &addr, &prefixlen, &packed, &packlen))
+		return NULL;
+	if ((prefix = args_to_prefix(addr, packed, packlen, prefixlen)) == NULL)
 		return NULL;
 
-	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
-		PyErr_SetString(PyExc_ValueError, "Invalid address format");
-		return NULL;
-	}
 	if (self->family == -1)
 		self->family = prefix->family;
 	else if (prefix->family != self->family) {
@@ -260,29 +311,28 @@ Radix_add(RadixObject *self, PyObject *args, PyObject *kw_args)
 }
 
 PyDoc_STRVAR(Radix_delete_doc,
-"Radix.delete(network[, masklen] -> None\n\
+"Radix.delete(network[, masklen][, packed] -> None\n\
 \n\
-Deletes the specified 'network' from the radix tree.");
+Deletes the specified network from the radix tree.");
 
 static PyObject *
 Radix_delete(RadixObject *self, PyObject *args, PyObject *kw_args)
 {
-	char *addr;
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
 	prefix_t *prefix;
+	static char *keywords[] = { "network", "masklen", "packed", NULL };
+
+	char *addr = NULL, *packed = NULL;
 	long prefixlen = -1;
-	static char *keywords[] = { "network", "masklen", NULL };
+	int packlen = -1;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "s|l:delete", keywords,
-	    &addr, &prefixlen))
+	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "|sls#:delete", keywords,
+	    &addr, &prefixlen, &packed, &packlen))
+		return NULL;
+	if ((prefix = args_to_prefix(addr, packed, packlen, prefixlen)) == NULL)
 		return NULL;
 
-	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
-		Deref_Prefix(prefix);
-		PyErr_SetString(PyExc_ValueError, "Invalid address format");
-		return NULL;
-	}
 	if ((node = radix_search_exact(self->rt, prefix)) == NULL) {
 		Deref_Prefix(prefix);
 		PyErr_SetString(PyExc_KeyError, "no such address");
@@ -303,9 +353,9 @@ Radix_delete(RadixObject *self, PyObject *args, PyObject *kw_args)
 }
 
 PyDoc_STRVAR(Radix_search_exact_doc,
-"Radix.search_exact(network[, masklen] -> RadixNode or None\n\
+"Radix.search_exact(network[, masklen][, packed] -> RadixNode or None\n\
 \n\
-Search for the specified 'network' in the radix tree. In order to\n\
+Search for the specified network in the radix tree. In order to\n\
 match, the 'prefix' must be specified exactly. Contrast with the\n\
 Radix.search_best method.\n\
 \n\
@@ -314,22 +364,21 @@ If no match is found, then this method returns None.");
 static PyObject *
 Radix_search_exact(RadixObject *self, PyObject *args, PyObject *kw_args)
 {
-	char *addr;
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
 	prefix_t *prefix;
+	static char *keywords[] = { "network", "masklen", "packed", NULL };
+
+	char *addr = NULL, *packed = NULL;
 	long prefixlen = -1;
-	static char *keywords[] = { "network", "masklen", NULL };
+	int packlen = -1;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "s|l:search_exact",
-	    keywords, &addr, &prefixlen))
+	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "|sls#:search_exact", keywords,
+	    &addr, &prefixlen, &packed, &packlen))
+		return NULL;
+	if ((prefix = args_to_prefix(addr, packed, packlen, prefixlen)) == NULL)
 		return NULL;
 
-	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
-		Deref_Prefix(prefix);
-		PyErr_SetString(PyExc_ValueError, "Invalid address format");
-		return NULL;
-	}
 	if ((node = radix_search_exact(self->rt, prefix)) == NULL || 
 	    node->data == NULL) {
 		Deref_Prefix(prefix);
@@ -343,9 +392,9 @@ Radix_search_exact(RadixObject *self, PyObject *args, PyObject *kw_args)
 }
 
 PyDoc_STRVAR(Radix_search_best_doc,
-"Radix.search_best(network[, masklen] -> None\n\
+"Radix.search_best(network[, masklen][, packed] -> None\n\
 \n\
-Search for the specified 'network' in the radix tree.\n\
+Search for the specified network in the radix tree.\n\
 \n\
 search_best will return the best (longest) entry that includes the\n\
 specified 'prefix', much like a IP routing table lookup.\n\
@@ -355,22 +404,21 @@ If no match is found, then returns None.");
 static PyObject *
 Radix_search_best(RadixObject *self, PyObject *args, PyObject *kw_args)
 {
-	char *addr;
 	radix_node_t *node;
 	RadixNodeObject *node_obj;
 	prefix_t *prefix;
+	static char *keywords[] = { "network", "masklen", "packed", NULL };
+
+	char *addr = NULL, *packed = NULL;
 	long prefixlen = -1;
-	static char *keywords[] = { "network", "masklen", NULL };
+	int packlen = -1;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "s|l:search_best",
-	    keywords, &addr, &prefixlen))
+	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "|sls#:search_best", keywords,
+	    &addr, &prefixlen, &packed, &packlen))
+		return NULL;
+	if ((prefix = args_to_prefix(addr, packed, packlen, prefixlen)) == NULL)
 		return NULL;
 
-	if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
-		Deref_Prefix(prefix);
-		PyErr_SetString(PyExc_ValueError, "Invalid address format");
-		return NULL;
-	}
 	if ((node = radix_search_best(self->rt, prefix)) == NULL || 
 	    node->data == NULL) {
 		Deref_Prefix(prefix);
@@ -686,10 +734,22 @@ Simple example:\n\
 	rnode = rtree.add(\"10.0.0.0\", 16)\n\
 	rnode = rtree.add(network = \"10.0.0.0\", masklen = 16)\n\
 \n\
+	# It is also possible to specify nodes using binary packed\n\
+	# addresses, such as those returned by the socket module\n\
+	# functions. In this case, the radix module will assume that\n\
+	# a four-byte address is an IPv4 address and a sixteen-byte\n\
+	# address is an IPv6 address. For example:\n\
+	binary_addr = inet_ntoa("172.18.22.0")\n\
+	rnode = rtree.add(packed = binary_addr, masklen = 23)\n\
+\n\
 	# Exact search will only return prefixes you have entered\n\
+	# You can use all of the above ways to specify the address\n\
 	rnode = rtree.search_exact(\"10.0.0.0/8\")\n\
 	# Get your data back out\n\
 	print rnode.data[\"blah\"]\n\
+	# Use a packed address\n\
+	addr = socket.inet_ntoa(\"10.0.0.0\")\n\
+	rnode = rtree.search_exact(packed = addr, masklen = 8)\n\
 \n\
 	# Best-match search will return the longest matching prefix\n\
 	# that contains the search term (routing-style lookup)\n\

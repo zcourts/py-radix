@@ -19,6 +19,8 @@
  - (djm) scrub off address bits past masklen, E.g. so tree.add("10.0.0.255/24")
    creates an idential object to tree.add("10.0.0.0/24")
  - (djm) Regress tests for bad addresses and insane mask lengths
+ - (djm) Support for binary packed addresses in Radix methods and a RadixNode
+    member
 
 20041121
  - (djm) Fix a bug: forgot to set the exception type when trying to get 

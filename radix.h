@@ -121,6 +121,7 @@ void radix_process(radix_tree_t *radix, void_fn_t func, void *cbctx);
 /* Local additions */
 
 prefix_t *prefix_pton(const char *string, long len);
+prefix_t *prefix_from_blob(u_char *blob, int len, int prefixlen);
 const char *prefix_addr_ntop(prefix_t *prefix, char *buf, size_t len);
 const char *prefix_ntop(prefix_t *prefix, char *buf, size_t len);
 

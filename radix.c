@@ -606,6 +606,33 @@ out:
 	return (ret);
 }
 
+prefix_t
+*prefix_from_blob(u_char *blob, int len, int prefixlen)
+{
+	int family, maxprefix;
+
+	switch (len) {
+	case 4:
+		/* Assume AF_INET */
+		family = AF_INET;
+		maxprefix = 32;
+		break;
+	case 16:
+		/* Assume AF_INET6 */
+		family = AF_INET6;
+		maxprefix = 128;
+		break;
+	default:
+		/* Who knows? */
+		return NULL;
+	}
+	if (prefixlen == -1)
+		prefixlen = maxprefix;
+	if (prefixlen < 0 || prefixlen > maxprefix)
+		return NULL;
+	return (New_Prefix2(family, blob, prefixlen, NULL));
+}
+
 const char *
 prefix_addr_ntop(prefix_t *prefix, char *buf, size_t len)
 {

@@ -39,10 +39,22 @@ A simple example that demonstrates most of the features:
 	rnode = rtree.add("10.0.0.0", 16)
 	rnode = rtree.add(network = "10.0.0.0", masklen = 16)
 
+	# It is also possible to specify nodes using binary packed
+	# addresses, such as those returned by the socket module
+	# functions. In this case, the radix module will assume that
+	# a four-byte address is an IPv4 address and a sixteen-byte
+	# address is an IPv6 address. For example:
+	binary_addr = inet_ntoa("172.18.22.0")
+	rnode = rtree.add(packed = binary_addr, masklen = 23)
+
 	# Exact search will only return prefixes you have entered
+	# You can use all of the above ways to specify the address
 	rnode = rtree.search_exact("10.0.0.0/8")
 	# Get your data back out
 	print rnode.data["blah"]
+	# Use a packed address
+	addr = socket.inet_ntoa("10.0.0.0")
+	rnode = rtree.search_exact(packed = addr, masklen = 8)
 
 	# Best-match search will return the longest matching prefix
 	# that contains the search term (routing-style lookup)
