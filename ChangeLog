@@ -3,6 +3,7 @@
  - (djm) Some stupid platforms still lack strl*, so avoid their use
  - (djm) Allow mixing of IPv4 and IPv6 prefixes in the same tree by keeping 
    separate trees in the RadixObject for each AF
+ - (djm) Release beta version: py-radix-0.3
 
 20041122
  - (djm) Raise a RuntimeWarning and abort iteration if the tree changes while
