@@ -161,12 +161,40 @@ class TestRadix(unittest.TestCase):
 		self.assert_(node1 is node2)
 		self.assert_(node1.prefix is node2.prefix)	
 
-	def test_12__mixed_address_family(self):
+	def test_12__inconsistent_masks4(self):
+		tree = radix.Radix()
+		node1 = tree.add("10.255.255.255", 28)
+		node2 = tree.add(network = "10.255.255.240/28")
+		node3 = tree.add(network = "10.255.255.252", masklen = 28)
+		self.assert_(node1 is node2)
+		self.assert_(node1 is node3)
+		self.assertEquals(node1.prefix, "10.255.255.240/28")
+
+	def test_13__inconsistent_masks6(self):
+		tree = radix.Radix()
+		node1 = tree.add("dead:beef:1234:5678::", 32)
+		node2 = tree.add(network = "dead:beef:8888:9999::/32")
+		node3 = tree.add(network = "dead:beef::", masklen = 32)
+		self.assert_(node1 is node2)
+		self.assert_(node1 is node3)
+		self.assertEquals(node1.prefix, "dead:beef::/32")
+
+	def test_14__bad_addresses(self):
+		tree = radix.Radix()
+		self.assertRaises(ValueError, tree.add, "blah/32")
+		self.assertRaises(ValueError, tree.add, "blah", 32)
+		self.assertRaises(ValueError, tree.add, "127.0.0.1", -2)
+		self.assertRaises(ValueError, tree.add, "127.0.0.1", 64)
+		self.assertRaises(ValueError, tree.add, "::", -2)
+		self.assertRaises(ValueError, tree.add, "::", 256)
+		self.assertEquals(len(tree.nodes()), 0)
+
+	def test_15__mixed_address_family(self):
 		tree = radix.Radix()
 		node1 = tree.add("127.0.0.1")
 		self.assertRaises(ValueError, tree.add, "::1")
 
-	def test_13__iterator(self):
+	def test_16__iterator(self):
 		tree = radix.Radix()
 		prefixes = [
 			"::1/128", "2000::/16", "2000::/8", "dead:beef::/64"
@@ -180,14 +208,14 @@ class TestRadix(unittest.TestCase):
 		iterprefixes.sort()
 		self.assertEqual(iterprefixes, prefixes)
 
-	def test_14__iterate_on_empty(self):
+	def test_17__iterate_on_empty(self):
 		tree = radix.Radix()
 		prefixes = []
 		for node in tree:
 			prefixes.append(node.prefix)
 		self.assertEqual(prefixes, [])
 
-	def test_15__iterate_and_modify_tree(self):
+	def test_18__iterate_and_modify_tree(self):
 		tree = radix.Radix()
 		prefixes = [
 			"::1/128", "2000::/16", "2000::/8", "dead:beef::/64"
@@ -197,7 +225,7 @@ class TestRadix(unittest.TestCase):
 			tree.add(prefix)
 		self.assertRaises(RuntimeWarning, map, lambda x: tree.delete(x.prefix), tree)
 
-	def test_16__lots_of_prefixes(self):
+	def test_19__lots_of_prefixes(self):
 		tree = radix.Radix()
 		num_nodes_in = 0
 		for i in range(0,128):

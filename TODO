@@ -7,10 +7,6 @@
     - Keep a separate v4/v6 trees in RadixObject; vs.
     - Modify radix.c lookup/search to treat first bit as family==AF_INET?
 
-
-- regress tests for bad addresses / masklens
-- regress tests for strange net/mask combos
-
 tree.copy()
 
 more KNF

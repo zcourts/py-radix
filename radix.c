@@ -60,6 +60,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <netdb.h>
 
@@ -535,8 +536,20 @@ radix_remove(radix_tree_t *radix, radix_node_t *node)
 		parent->l = child;
 }
 
-
 /* Local additions */
+static void
+sanitise_mask(u_char *addr, u_int masklen, u_int maskbits)
+{
+	u_int i = masklen / 8;
+	u_int j = masklen % 8;
+
+	if (j != 0) {
+		addr[i] &= addr[i] & (~0) << j;
+		i++;
+	}
+	for (; i < maskbits / 8; i++)
+		addr[i] = 0;
+}
 
 prefix_t
 *prefix_pton(const char *string, long len)
@@ -573,6 +586,7 @@ prefix_t
 		else if (len < 0 || len > 32)
 			goto out;
 		addr = &((struct sockaddr_in *) ai->ai_addr)->sin_addr;
+		sanitise_mask(addr, len, 32);
 		break;
 	case AF_INET6:
 		if (len == -1)
@@ -580,6 +594,7 @@ prefix_t
 		else if (len < 0 || len > 128)
 			goto out;
 		addr = &((struct sockaddr_in6 *) ai->ai_addr)->sin6_addr;
+		sanitise_mask(addr, len, 128);
 		break;
 	default:
 		goto out;

@@ -16,6 +16,9 @@
     method("xx.xx.xx.xx", yy)
  - (djm) Support keyword arguments for Radix methods. E.g. 
    tree.add(network="127.0.0.1", masklen=32)
+ - (djm) scrub off address bits past masklen, E.g. so tree.add("10.0.0.255/24")
+   creates an idential object to tree.add("10.0.0.0/24")
+ - (djm) Regress tests for bad addresses and insane mask lengths
 
 20041121
  - (djm) Fix a bug: forgot to set the exception type when trying to get 
