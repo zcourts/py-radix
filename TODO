@@ -9,4 +9,7 @@ more KNF
 tree.search_all_containing(network) -> [ network, network ] (sorted by prefix)
 (use search_best2 internally)
 
+tree.search_containing(network) -> RadixNode or None
+ Find the prefix containing 'network', not including an exact match. 
+
 $Id$
