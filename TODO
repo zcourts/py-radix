@@ -6,4 +6,7 @@ tree.copy()
 
 more KNF
 
+tree.search_all_containing(network) -> [ network, network ] (sorted by prefix)
+(use search_best2 internally)
+
 $Id$
