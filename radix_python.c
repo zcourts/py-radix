@@ -740,7 +740,7 @@ Simple example:\n\
 	# functions. In this case, the radix module will assume that\n\
 	# a four-byte address is an IPv4 address and a sixteen-byte\n\
 	# address is an IPv6 address. For example:\n\
-	binary_addr = inet_ntoa("172.18.22.0")\n\
+	binary_addr = inet_ntoa(\"172.18.22.0\")\n\
 	rnode = rtree.add(packed = binary_addr, masklen = 23)\n\
 \n\
 	# Exact search will only return prefixes you have entered\n\
@@ -766,7 +766,7 @@ Simple example:\n\
 	# NB. Don't mix IPv4 and IPv6 in the same tree!\n\
 	# This code would raise a ValueError, because the tree\n\
 	# already contains IPv4 prefixes\n\
-	rnode = rtree.add(\"2001:DB8::/3\")\n\
+	rnode = rtree.add(\"2001:DB8::/32\")\n\
 	rnode = rtree.add(\"::/0\")\n\
 \n\
 	# Use the nodes() method to return all RadixNodes created\n\
