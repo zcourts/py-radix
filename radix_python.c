@@ -176,27 +176,20 @@ newRadixObject(PyObject *arg)
 /* Radix methods */
 
 static void
-rt_dealloc_cb(radix_node_t *rn, void *cbctx)
-{
-	RadixNodeObject *node;
-
-	if (rn->data != NULL) {
-		node = rn->data;
-		/*
-		 * Decrement refcount on nodes and invalidate their 
-		 * underlying parent. This decouples the Python nodes from
-		 * their radix.c node parents, allowing them to be used
-		 * after the tree is gone
-		 */
-		node->rn = NULL;
-		Py_XDECREF(node);
-	}
-}
-
-static void
 Radix_dealloc(RadixObject *self)
 {
-	Destroy_Radix(self->rt, rt_dealloc_cb, NULL);
+	radix_node_t *rn;
+	RadixNodeObject *node;
+
+	RADIX_WALK(self->rt->head, rn) {
+		if (rn->data != NULL) {
+			node = rn->data;
+			node->rn = NULL;
+			Py_DECREF(node);
+		}
+	} RADIX_WALK_END;
+
+	Destroy_Radix(self->rt, NULL, NULL);
 	PyObject_Del(self);
 }
 

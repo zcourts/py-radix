@@ -5,6 +5,7 @@
    empty tree, modify tree while iterating, add/delete/check lots of prefixes
  - (djm) order and tidy regress test function names
  - (djm) Don't need to use a callback to do Radix.nodes(), so don't use one
+ - (djm) Avoid callback for tree deletes too
 
 20041121
  - (djm) Fix a bug: forgot to set the exception type when trying to get 
