@@ -3,6 +3,7 @@
    RadixNode members that don't exist
  - (djm) Prepare for Radix.method(address, masklen) by extending radix API
  - (djm) Add regression tests (not yet integrated with build)
+ - (djm) Always allocate user objects in RadixNode
 
 20041118
  - (djm) Start the changelog

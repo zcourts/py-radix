@@ -46,20 +46,21 @@ newRadixNodeObject(PyObject *arg, radix_node_t *rn)
 	if (self == NULL)
 		return NULL;
 
-	self->user_attr = NULL;
 	self->rn = rn;
 
 	/* Format addresses for packing into objects */
 	prefix_addr_ntop(rn->prefix, network, sizeof(network));
 	prefix_ntop(rn->prefix, prefix, sizeof(prefix));
 
-	self->prefixlen = PyInt_FromLong(rn->prefix->bitlen);
-	self->family = PyInt_FromLong(rn->prefix->family);
+	self->user_attr = PyDict_New();
 	self->network = PyString_FromString(network);
 	self->prefix = PyString_FromString(prefix);
+	self->prefixlen = PyInt_FromLong(rn->prefix->bitlen);
+	self->family = PyInt_FromLong(rn->prefix->family);
 	
-	if (self->prefixlen == NULL || self->family == NULL || 
-	    self->network == NULL || self->prefix == NULL) {
+	if (self->user_attr == NULL || self->prefixlen == NULL || 
+	    self->family == NULL || self->network == NULL || 
+	    self->prefix == NULL) {
 		/* RadixNode_dealloc will clean up for us */
 		Py_XDECREF(self);
 		return (NULL);		
@@ -103,11 +104,8 @@ RadixNode_getattr(RadixNodeObject *self, char *name)
 		return self->family;
 	}
 
-	user_obj = NULL;
-	if (self->user_attr != NULL) {
-		user_obj = PyDict_GetItemString(self->user_attr, name);
-		Py_XINCREF(user_obj);
-	}
+	user_obj = PyDict_GetItemString(self->user_attr, name);
+	Py_XINCREF(user_obj);
 	if (user_obj == NULL) {
 		PyErr_SetString(PyExc_AttributeError,
 		    "RadixNode object does not have this attribute");
@@ -125,12 +123,6 @@ RadixNode_setattr(RadixNodeObject *self, char *name, PyObject *v)
 		PyErr_SetString(PyExc_AttributeError,
 		    "attempt to modify read-only RadixNode members");
 		return -1;
-	}
-
-	if (self->user_attr == NULL) {
-		self->user_attr = PyDict_New();
-		if (self->user_attr == NULL)
-			return -1;
 	}
 
 	/* Handle deletes */
