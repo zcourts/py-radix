@@ -72,14 +72,13 @@
  */
 
 static int
-comp_with_mask(void *addr, void *dest, u_int mask)
+comp_with_mask(u_char *addr, u_char *dest, u_int mask)
 {
 	if (memcmp(addr, dest, mask / 8) == 0) {
 		int n = mask / 8;
 		int m = ((-1) << (8 - (mask % 8)));
 
-		if (mask % 8 == 0 ||
-		    (((u_char *) addr)[n] & m) == (((u_char *) dest)[n] & m))
+		if (mask % 8 == 0 || (addr[n] & m) == (dest[n] & m))
 			return (1);
 	}
 	return (0);
@@ -156,8 +155,6 @@ Deref_Prefix(prefix_t *prefix)
  * $MRTId: radix.c,v 1.1.1.1 2000/08/14 18:46:13 labovit Exp $
  */
 
-/* #define RADIX_DEBUG 1 */
-
 /* these routines support continuous mask only */
 
 radix_tree_t
@@ -178,8 +175,7 @@ radix_tree_t
  * if func is supplied, it will be called as func(node->data)
  * before deleting the node
  */
-
-void
+static void
 Clear_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx)
 {
 	if (radix->head) {
@@ -216,7 +212,6 @@ Clear_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx)
 	assert(radix->num_active_node == 0);
 }
 
-
 void
 Destroy_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx)
 {
@@ -224,11 +219,9 @@ Destroy_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx)
 	free(radix);
 }
 
-
 /*
  * if func is supplied, it will be called as func(node->prefix, node->data)
  */
-
 void
 radix_process(radix_tree_t *radix, void_fn_t func, void *cbctx)
 {
@@ -239,7 +232,6 @@ radix_process(radix_tree_t *radix, void_fn_t func, void *cbctx)
 		func(node, cbctx);
 	} RADIX_WALK_END;
 }
-
 
 radix_node_t
 *radix_search_exact(radix_tree_t *radix, prefix_t *prefix)

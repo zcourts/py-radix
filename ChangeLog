@@ -9,6 +9,7 @@
  - (djm) GC unusued args to newRadixNodeObject
  - (djm) KNF and GC radix.h
  - (djm) unifdef radix.c
+ - (djm) KNF radix.c (more remains)
 
 20041121
  - (djm) Fix a bug: forgot to set the exception type when trying to get 

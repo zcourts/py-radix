@@ -86,7 +86,6 @@ typedef struct _radix_tree_t {
 
 radix_tree_t *New_Radix(void);
 void Destroy_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx);
-void Clear_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx);
 radix_node_t *radix_lookup(radix_tree_t *radix, prefix_t *prefix);
 void radix_remove(radix_tree_t *radix, radix_node_t *node);
 radix_node_t *radix_search_exact(radix_tree_t *radix, prefix_t *prefix);
