@@ -201,6 +201,7 @@ Radix_dealloc(RadixObject *self)
 	Destroy_Radix(self->rt, NULL, NULL);
 	PyObject_Del(self);
 }
+
 static prefix_t
 *args_to_prefix(char *addr, char *packed, int packlen, long prefixlen)
 {
@@ -765,7 +766,7 @@ Simple example:\n\
 	# NB. Don't mix IPv4 and IPv6 in the same tree!\n\
 	# This code would raise a ValueError, because the tree\n\
 	# already contains IPv4 prefixes\n\
-	rnode = rtree.add(\"2001:200::/32\")\n\
+	rnode = rtree.add(\"2001:DB8::/3\")\n\
 	rnode = rtree.add(\"::/0\")\n\
 \n\
 	# Use the nodes() method to return all RadixNodes created\n\
