@@ -61,3 +61,6 @@ A simple example, that demonstrates most of the features:
 	# this would save some memory if the tree is big
 	for rnode in rtree:
   		print rnode.prefix
+
+
+$Id$
