@@ -4,6 +4,10 @@
  - (djm) Prepare for Radix.method(address, masklen) by extending radix API
  - (djm) Add regression tests (not yet integrated with build)
  - (djm) Always allocate user objects in RadixNode
+ - (djm) API change: don't allow creation of arbirtary members in RadixNode.
+   Instead, provide a data dict for storage of user-specified state. This 
+   avoid all of the introspection breakage of providing our get/setattr 
+   functions
 
 20041118
  - (djm) Start the changelog

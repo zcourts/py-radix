@@ -3,5 +3,3 @@
 - Extend Radix.methods to take (network, prefixlen) arguments
 
 - tree.delete(RadixNode)
-
-- Allow introspection into RadixNode

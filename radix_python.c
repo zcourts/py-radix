@@ -82,59 +82,21 @@ RadixNode_dealloc(RadixNodeObject *self)
 	PyObject_Del(self);
 }
 
-static PyObject *
-RadixNode_getattr(RadixNodeObject *self, char *name)
-{
-	PyObject *user_obj;
+	PyObject *user_attr;	/* User-specified attributes */
+	PyObject *network;
+	PyObject *prefix;
+	PyObject *prefixlen;
+	PyObject *family;
 
-	if (strcmp(name, "network") == 0) {
-		Py_INCREF(self->network);
-		return self->network;
-	}
-	if (strcmp(name, "prefix") == 0) {
-		Py_INCREF(self->prefix);
-		return self->prefix;
-	}
-	if (strcmp(name, "prefixlen") == 0) {
-		Py_INCREF(self->prefixlen);
-		return self->prefixlen;
-	}
-	if (strcmp(name, "family") == 0) {
-		Py_INCREF(self->family);
-		return self->family;
-	}
+static PyMemberDef RadixNode_members[] = {
+	{"data",	T_OBJECT, offsetof(RadixNodeObject, user_attr),	READONLY},
+	{"network",	T_OBJECT, offsetof(RadixNodeObject, network),	READONLY},
+	{"prefix",	T_OBJECT, offsetof(RadixNodeObject, prefix),	READONLY},
+	{"prefixlen",	T_OBJECT, offsetof(RadixNodeObject, prefixlen),	READONLY},
+	{"family",	T_OBJECT, offsetof(RadixNodeObject, family),	READONLY},
+	{NULL}
+};
 
-	user_obj = PyDict_GetItemString(self->user_attr, name);
-	Py_XINCREF(user_obj);
-	if (user_obj == NULL) {
-		PyErr_SetString(PyExc_AttributeError,
-		    "RadixNode object does not have this attribute");
-	}
-	return user_obj;
-}
-
-static int
-RadixNode_setattr(RadixNodeObject *self, char *name, PyObject *v)
-{
-	int rv;
-
-	if (strcmp(name, "network") == 0 || strcmp(name, "prefix") == 0 ||
-	    strcmp(name, "prefixlen") == 0 || strcmp(name, "family") == 0) {
-		PyErr_SetString(PyExc_AttributeError,
-		    "attempt to modify read-only RadixNode members");
-		return -1;
-	}
-
-	/* Handle deletes */
-	if (v == NULL) {
-		if ((rv = PyDict_DelItemString(self->user_attr, name)) < 0)
-			PyErr_SetString(PyExc_AttributeError,
-			    "delete non-existing RadixNode attribute");
-		return (rv);
-	}
-
-	return PyDict_SetItemString(self->user_attr, name, v);
-}
 
 static PyTypeObject RadixNode_Type = {
 	/* The ob_type field must be initialized in the module init function
@@ -147,8 +109,8 @@ static PyTypeObject RadixNode_Type = {
 	/* methods */
 	(destructor)RadixNode_dealloc, /*tp_dealloc*/
 	0,			/*tp_print*/
-	(getattrfunc)RadixNode_getattr, /*tp_getattr*/
-	(setattrfunc)RadixNode_setattr, /*tp_setattr*/
+	0,			/*tp_getattr*/
+	0,			/*tp_setattr*/
 	0,			/*tp_compare*/
 	0,			/*tp_repr*/
 	0,			/*tp_as_number*/
@@ -169,7 +131,7 @@ static PyTypeObject RadixNode_Type = {
 	0,			/*tp_iter*/
 	0,			/*tp_iternext*/
 	0,			/*tp_methods*/
-	0,			/*tp_members*/
+	RadixNode_members,	/*tp_members*/
 	0,			/*tp_getset*/
 	0,			/*tp_base*/
 	0,			/*tp_dict*/
@@ -525,15 +487,15 @@ Simple example:\n\
 	# Create a new tree\n\
 	rtree = radix.Radix()\n\
 \n\
-	# Adding a node returns a RadixNode object. You can creat\n\
-	# arbitrary members in this to store your data\n\
+	# Adding a node returns a RadixNode object. You can create\n\
+	# arbitrary members in its 'data' dict to store your data\n\
 	rnode = rtree.add(\"10.0.0.0/8\")\n\
-	rnode.blah = \"whatever you want\"\n\
+	rnode.data[\"blah\"] = \"whatever you want\"\n\
 \n\
 	# Exact search will only return prefixes you have entered\n\
 	rnode = rtree.search_exact(\"10.0.0.0/8\")\n\
 	# Get your data back out\n\
-	print rnode.blah\n\
+	print rnode.data[\"blah\"]\n\
 \n\
 	# Best-match search will return the longest matching prefix\n\
 	# that contains the search term (routing-style lookup)\n\
@@ -543,7 +505,7 @@ Simple example:\n\
 	print rnode.network	# -> \"10.0.0.0\"\n\
 	print rnode.prefix	# -> \"10.0.0.0/8\"\n\
 	print rnode.prefixlen	# -> 8\n\
-	print rnode.family	# int (same as socket.AF_INET)\n\
+	print rnode.family	# system-dependant (same as socket.AF_INET)\n\
 \n\
 	# IPv6 prefixes are fully supported\n\
 	rnode = rtree.add(\"2001:200::/32\")\n\

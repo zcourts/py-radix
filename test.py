@@ -36,20 +36,20 @@ class TestRadix(unittest.TestCase):
 	def testnodeuserdata(self):
 		tree = radix.Radix()
 		node = tree.add("10.0.0.0/8")
-		node.blah = "abc123"
-		node.foo = 12345
-		self.assertEqual(node.blah, "abc123")
-		self.assertEqual(node.foo, 12345)
+		node.data["blah"] = "abc123"
+		node.data["foo"] = 12345
+		self.assertEqual(node.data["blah"], "abc123")
+		self.assertEqual(node.data["foo"], 12345)
 		self.assertRaises(AttributeError, lambda x: x.nonexist, node)
-		del node.blah
-		self.assertRaises(AttributeError, lambda x: x.blah, node)
+		del node.data["blah"]
+		self.assertRaises(KeyError, lambda x: x.data["blah"], node)
 
 	def testsearchexact(self):
 		tree = radix.Radix()
 		node1 = tree.add("10.0.0.0/8")
 		node2 = tree.add("10.0.0.0/16")
 		node3 = tree.add("10.0.0.0/24")
-		node2.foo = 12345
+		node2.data["foo"] = 12345
 		node = tree.search_exact("127.0.0.1");
 		self.assertEqual(node, None)
 		node = tree.search_exact("10.0.0.0");
@@ -59,7 +59,7 @@ class TestRadix(unittest.TestCase):
 		node = tree.search_exact("10.0.0.0/8");
 		self.assertEqual(node, node1)
 		node = tree.search_exact("10.0.0.0/16");
-		self.assertEqual(node.foo, 12345)
+		self.assertEqual(node.data["foo"], 12345)
 				
 	def testsearchbest(self):
 		tree = radix.Radix()
@@ -81,13 +81,13 @@ class TestRadix(unittest.TestCase):
 		node1_1 = tree1.add("10.0.0.0/8")
 		node1_2 = tree1.add("10.0.0.0/16")
 		node1_3 = tree1.add("10.0.0.0/24")
-		node1_3.blah = 12345
+		node1_3.data["blah"] = 12345
 		tree2 = radix.Radix()
 		node2_1 = tree2.add("30.0.0.0/8")
 		node2_1 = tree2.add("10.0.0.0/8")
 		node2_2 = tree2.add("10.0.0.0/16")
 		node2_3 = tree2.add("10.0.0.0/24")
-		node2_3.blah = 45678
+		node2_3.data["blah"] = 45678
 		self.assertNotEqual(tree1, tree2)
 		self.assertNotEqual(node1_2, node2_2)
 		node = tree1.search_best("10.0.1.0/24");
@@ -96,7 +96,7 @@ class TestRadix(unittest.TestCase):
 		node = tree2.search_best("20.0.0.0/24");
 		self.assertEqual(node, None)
 		node = tree2.search_best("10.0.0.10");
-		self.assertEqual(node.blah, 45678)
+		self.assertEqual(node.data["blah"], 45678)
 
 	def testdeletes(self):
 		tree = radix.Radix()
