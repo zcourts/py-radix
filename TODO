@@ -1,7 +1,7 @@
-- Regression tests
-
 - Iterator support for Radix
 
 - Extend Radix.methods to take (network, prefixlen) arguments
+
+- tree.delete(RadixNode)
 
 - Allow introspection into RadixNode

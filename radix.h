@@ -163,7 +163,8 @@ do { \
 
 /* Local additions */
 
-prefix_t *prefix_pton(const char *string);
+prefix_t *prefix_pton(const char *string, long len);
 const char *prefix_addr_ntop(prefix_t *prefix, char *buf, size_t len);
+const char *prefix_ntop(prefix_t *prefix, char *buf, size_t len);
 
 #endif /* _RADIX_H */

@@ -702,20 +702,20 @@ radix_remove(radix_tree_t * radix, radix_node_t * node)
 /* Local additions */
 
 prefix_t
-*prefix_pton(const char *string)
+*prefix_pton(const char *string, long len)
 {
 	char save[256], *cp, *ep;
 	struct addrinfo hints, *ai;
 	void *addr;
-	long len;
 	prefix_t *ret;
 
 	ret = NULL;
-	len = -1;
 
 	if (strlcpy(save, string, sizeof(save)) >= sizeof(save))
 		return (NULL);
 	if ((cp = strchr(save, '/')) != NULL) {
+		if (len != -1 )
+			return (NULL);
 		*cp++ = '\0';
 		len = strtol(cp, &ep, 10);
 		if (*cp == '\0' || *ep != '\0' || len < 0)
@@ -759,3 +759,16 @@ prefix_addr_ntop(prefix_t *prefix, char *buf, size_t len)
 {
 	return (inet_ntop(prefix->family, &prefix->add, buf, len));
 }
+
+const char *
+prefix_ntop(prefix_t *prefix, char *buf, size_t len)
+{
+	char addrbuf[128];
+
+	if (prefix_addr_ntop(prefix, addrbuf, sizeof(addrbuf)) == NULL)
+		return (NULL);
+	snprintf(buf, len, "%s/%d", addrbuf, prefix->bitlen);
+
+	return (buf);
+}
+

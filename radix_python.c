@@ -51,7 +51,7 @@ newRadixNodeObject(PyObject *arg, radix_node_t *rn)
 
 	/* Format addresses for packing into objects */
 	prefix_addr_ntop(rn->prefix, network, sizeof(network));
-	snprintf(prefix, sizeof(prefix), "%s/%d", network, rn->prefix->bitlen);
+	prefix_ntop(rn->prefix, prefix, sizeof(prefix));
 
 	self->prefixlen = PyInt_FromLong(rn->prefix->bitlen);
 	self->family = PyInt_FromLong(rn->prefix->family);
@@ -103,12 +103,16 @@ RadixNode_getattr(RadixNodeObject *self, char *name)
 		return self->family;
 	}
 
+	user_obj = NULL;
 	if (self->user_attr != NULL) {
 		user_obj = PyDict_GetItemString(self->user_attr, name);
 		Py_XINCREF(user_obj);
-		return user_obj;
 	}
-	return NULL;
+	if (user_obj == NULL) {
+		PyErr_SetString(PyExc_AttributeError,
+		    "RadixNode object does not have this attribute");
+	}
+	return user_obj;
 }
 
 static int
@@ -255,7 +259,7 @@ Radix_add(RadixObject *self, PyObject *args)
 
 	if (!PyArg_ParseTuple(args, "s:add", &addr))
 		return NULL;
-	if ((prefix = prefix_pton(addr)) == NULL) {
+	if ((prefix = prefix_pton(addr, -1)) == NULL) {
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
 		return NULL;
 	}
@@ -300,7 +304,7 @@ Radix_delete(RadixObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "s:del", &addr))
 		return NULL;
 
-	if ((prefix = prefix_pton(addr)) == NULL) {
+	if ((prefix = prefix_pton(addr, -1)) == NULL) {
 		Deref_Prefix(prefix);
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
 		return NULL;
@@ -341,7 +345,7 @@ Radix_search_exact(RadixObject *self, PyObject *args)
 
 	if (!PyArg_ParseTuple(args, "s:search_exact", &addr))
 		return NULL;
-	if ((prefix = prefix_pton(addr)) == NULL) {
+	if ((prefix = prefix_pton(addr, -1)) == NULL) {
 		Deref_Prefix(prefix);
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
 		return NULL;
@@ -376,7 +380,7 @@ Radix_search_best(RadixObject *self, PyObject *args)
 
 	if (!PyArg_ParseTuple(args, "s:search_best", &addr))
 		return NULL;
-	if ((prefix = prefix_pton(addr)) == NULL) {
+	if ((prefix = prefix_pton(addr, -1)) == NULL) {
 		Deref_Prefix(prefix);
 		PyErr_SetString(PyExc_ValueError, "Invalid address format");
 		return NULL;
