@@ -10,6 +10,8 @@
 
 tree.copy()
 
+tree.prefixes() -> [ xxx/y, xxx/y ]
+
 more KNF
 
 $Id$
