@@ -66,10 +66,7 @@ A simple example that demonstrates most of the features:
 	print rnode.prefixlen	# -> 8
 	print rnode.family	# -> socket.AF_INET
 
-	# IPv6 prefixes are fully supported (in separate trees)
-	# NB. Don't mix IPv4 and IPv6 in the same tree!
-	# This code would raise a ValueError, because the tree
-	# already contains IPv4 prefixes
+	# IPv6 prefixes are fully supported in the same tree
 	rnode = rtree.add("2001:DB8::/3")
 	rnode = rtree.add("::/0")
 

@@ -788,10 +788,7 @@ Simple example:\n\
 	print rnode.prefixlen	# -> 8\n\
 	print rnode.family	# -> socket.AF_INET\n\
 \n\
-	# IPv6 prefixes are fully supported (in separate trees)\n\
-	# NB. Don't mix IPv4 and IPv6 in the same tree!\n\
-	# This code would raise a ValueError, because the tree\n\
-	# already contains IPv4 prefixes\n\
+	# IPv6 prefixes are fully supported in the same tree\n\
 	rnode = rtree.add(\"2001:DB8::/32\")\n\
 	rnode = rtree.add(\"::/0\")\n\
 \n\
