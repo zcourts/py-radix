@@ -39,12 +39,26 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Portions Copyright (c) 2004 Damien Miller <djm@mindrot.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
@@ -75,8 +89,8 @@ static int
 comp_with_mask(u_char *addr, u_char *dest, u_int mask)
 {
 	if (memcmp(addr, dest, mask / 8) == 0) {
-		int n = mask / 8;
-		int m = ((-1) << (8 - (mask % 8)));
+		u_int n = mask / 8;
+		u_int m = ((~0) << (8 - (mask % 8)));
 
 		if (mask % 8 == 0 || (addr[n] & m) == (dest[n] & m))
 			return (1);
@@ -137,13 +151,7 @@ Deref_Prefix(prefix_t *prefix)
 {
 	if (prefix == NULL)
 		return;
-	/*
-	 * for secure programming, raise an assert. no static prefix can call
-	 * this
-	 */
-	assert(prefix->ref_count > 0);
 	prefix->ref_count--;
-	assert(prefix->ref_count >= 0);
 	if (prefix->ref_count <= 0) {
 		free(prefix);
 		return;
@@ -160,7 +168,7 @@ Deref_Prefix(prefix_t *prefix)
 radix_tree_t
 *New_Radix(void)
 {
-	radix_tree_t   *radix;
+	radix_tree_t *radix;
 
 	if ((radix = calloc(1, sizeof(*radix))) == NULL)
 		return (NULL);
@@ -179,7 +187,6 @@ static void
 Clear_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx)
 {
 	if (radix->head) {
-
 		radix_node_t *Xstack[RADIX_MAXBITS + 1];
 		radix_node_t **Xsp = Xstack;
 		radix_node_t *Xrn = radix->head;
@@ -209,7 +216,6 @@ Clear_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx)
 			}
 		}
 	}
-	assert(radix->num_active_node == 0);
 }
 
 void
@@ -226,7 +232,6 @@ void
 radix_process(radix_tree_t *radix, void_fn_t func, void *cbctx)
 {
 	radix_node_t *node;
-	assert(func);
 
 	RADIX_WALK(radix->head, node) {
 		func(node, cbctx);
@@ -240,10 +245,6 @@ radix_node_t
 	u_char *addr;
 	u_int bitlen;
 
-	assert(radix);
-	assert(prefix);
-	assert(prefix->bitlen <= radix->maxbits);
-
 	if (radix->head == NULL)
 		return (NULL);
 
@@ -252,12 +253,10 @@ radix_node_t
 	bitlen = prefix->bitlen;
 
 	while (node->bit < bitlen) {
-
-		if (BIT_TEST(addr[node->bit >> 3], 0x80 >> (node->bit & 0x07))) {
+		if (BIT_TEST(addr[node->bit >> 3], 0x80 >> (node->bit & 0x07)))
 			node = node->r;
-		} else {
+		else
 			node = node->l;
-		}
 
 		if (node == NULL)
 			return (NULL);
@@ -265,12 +264,11 @@ radix_node_t
 
 	if (node->bit > bitlen || node->prefix == NULL)
 		return (NULL);
-	assert(node->bit == bitlen);
-	assert(node->bit == node->prefix->bitlen);
-	if (comp_with_mask(prefix_tochar(node->prefix), prefix_tochar(prefix),
-			   bitlen)) {
+
+	if (comp_with_mask(prefix_tochar(node->prefix),
+	    prefix_tochar(prefix), bitlen))
 		return (node);
-	}
+
 	return (NULL);
 }
 
@@ -285,10 +283,6 @@ static radix_node_t
 	u_int bitlen;
 	int cnt = 0;
 
-	assert(radix);
-	assert(prefix);
-	assert(prefix->bitlen <= radix->maxbits);
-
 	if (radix->head == NULL)
 		return (NULL);
 
@@ -297,15 +291,12 @@ static radix_node_t
 	bitlen = prefix->bitlen;
 
 	while (node->bit < bitlen) {
-
-		if (node->prefix) {
+		if (node->prefix)
 			stack[cnt++] = node;
-		}
-		if (BIT_TEST(addr[node->bit >> 3], 0x80 >> (node->bit & 0x07))) {
+		if (BIT_TEST(addr[node->bit >> 3], 0x80 >> (node->bit & 0x07)))
 			node = node->r;
-		} else {
+		else
 			node = node->l;
-		}
 
 		if (node == NULL)
 			break;
@@ -321,10 +312,8 @@ static radix_node_t
 	while (--cnt >= 0) {
 		node = stack[cnt];
 		if (comp_with_mask(prefix_tochar(node->prefix),
-				   prefix_tochar(prefix),
-				   node->prefix->bitlen)) {
+		    prefix_tochar(prefix), node->prefix->bitlen))
 			return (node);
-		}
 	}
 	return (NULL);
 }
@@ -345,10 +334,6 @@ radix_node_t
 	u_int bitlen, check_bit, differ_bit;
 	int i, j, r;
 
-	assert(radix);
-	assert(prefix);
-	assert(prefix->bitlen <= radix->maxbits);
-
 	if (radix->head == NULL) {
 		if ((node = calloc(1, sizeof(*node))) == NULL)
 			return (NULL);
@@ -366,9 +351,8 @@ radix_node_t
 	node = radix->head;
 
 	while (node->bit < bitlen || node->prefix == NULL) {
-
-		if (node->bit < radix->maxbits &&
-		BIT_TEST(addr[node->bit >> 3], 0x80 >> (node->bit & 0x07))) {
+		if (node->bit < radix->maxbits && BIT_TEST(addr[node->bit >> 3],
+		    0x80 >> (node->bit & 0x07))) {
 			if (node->r == NULL)
 				break;
 			node = node->r;
@@ -377,11 +361,7 @@ radix_node_t
 				break;
 			node = node->l;
 		}
-
-		assert(node);
 	}
-
-	assert(node->prefix);
 
 	test_addr = prefix_touchar(node->prefix);
 	/* find the first bit different */
@@ -398,7 +378,6 @@ radix_node_t
 				break;
 		}
 		/* must be found */
-		assert(j < 8);
 		differ_bit = i * 8 + j;
 		break;
 	}
@@ -412,11 +391,8 @@ radix_node_t
 	}
 
 	if (differ_bit == bitlen && node->bit == bitlen) {
-		if (node->prefix) {
-			return (node);
-		}
-		node->prefix = Ref_Prefix(prefix);
-		assert(node->data == NULL);
+		if (node->prefix == NULL)
+			node->prefix = Ref_Prefix(prefix);
 		return (node);
 	}
 	if ((new_node = calloc(1, sizeof(*new_node))) == NULL)
@@ -430,32 +406,29 @@ radix_node_t
 
 	if (node->bit == differ_bit) {
 		new_node->parent = node;
-		if (node->bit < radix->maxbits &&
-		BIT_TEST(addr[node->bit >> 3], 0x80 >> (node->bit & 0x07))) {
-			assert(node->r == NULL);
+		if (node->bit < radix->maxbits && BIT_TEST(addr[node->bit >> 3],
+		    0x80 >> (node->bit & 0x07)))
 			node->r = new_node;
-		} else {
-			assert(node->l == NULL);
+		else
 			node->l = new_node;
-		}
+
 		return (new_node);
 	}
 	if (bitlen == differ_bit) {
-		if (bitlen < radix->maxbits &&
-		BIT_TEST(test_addr[bitlen >> 3], 0x80 >> (bitlen & 0x07))) {
+		if (bitlen < radix->maxbits && BIT_TEST(test_addr[bitlen >> 3],
+		    0x80 >> (bitlen & 0x07)))
 			new_node->r = node;
-		} else {
+		else
 			new_node->l = node;
-		}
+
 		new_node->parent = node->parent;
-		if (node->parent == NULL) {
-			assert(radix->head == node);
+		if (node->parent == NULL)
 			radix->head = new_node;
-		} else if (node->parent->r == node) {
+		else if (node->parent->r == node)
 			node->parent->r = new_node;
-		} else {
+		else
 			node->parent->l = new_node;
-		}
+
 		node->parent = new_node;
 	} else {
 		if ((glue = calloc(1, sizeof(*glue))) == NULL)
@@ -466,7 +439,8 @@ radix_node_t
 		glue->data = NULL;
 		radix->num_active_node++;
 		if (differ_bit < radix->maxbits &&
-		    BIT_TEST(addr[differ_bit >> 3], 0x80 >> (differ_bit & 0x07))) {
+		    BIT_TEST(addr[differ_bit >> 3],
+		    0x80 >> (differ_bit & 0x07))) {
 			glue->r = new_node;
 			glue->l = node;
 		} else {
@@ -475,14 +449,13 @@ radix_node_t
 		}
 		new_node->parent = glue;
 
-		if (node->parent == NULL) {
-			assert(radix->head == node);
+		if (node->parent == NULL)
 			radix->head = glue;
-		} else if (node->parent->r == node) {
+		else if (node->parent->r == node)
 			node->parent->r = glue;
-		} else {
+		else
 			node->parent->l = glue;
-		}
+
 		node->parent = glue;
 	}
 	return (new_node);
@@ -494,11 +467,7 @@ radix_remove(radix_tree_t *radix, radix_node_t *node)
 {
 	radix_node_t *parent, *child;
 
-	assert(radix);
-	assert(node);
-
 	if (node->r && node->l) {
-
 		/*
 		 * this might be a placeholder node -- have to check and make
 		 * sure there is a prefix aossciated with it !
@@ -517,7 +486,6 @@ radix_remove(radix_tree_t *radix, radix_node_t *node)
 		radix->num_active_node--;
 
 		if (parent == NULL) {
-			assert(radix->head == node);
 			radix->head = NULL;
 			return;
 		}
@@ -525,7 +493,6 @@ radix_remove(radix_tree_t *radix, radix_node_t *node)
 			parent->r = NULL;
 			child = parent->l;
 		} else {
-			assert(parent->l == node);
 			parent->l = NULL;
 			child = parent->r;
 		}
@@ -534,27 +501,23 @@ radix_remove(radix_tree_t *radix, radix_node_t *node)
 			return;
 
 		/* we need to remove parent too */
-
-		if (parent->parent == NULL) {
-			assert(radix->head == parent);
+		if (parent->parent == NULL)
 			radix->head = child;
-		} else if (parent->parent->r == parent) {
+		else if (parent->parent->r == parent)
 			parent->parent->r = child;
-		} else {
-			assert(parent->parent->l == parent);
+		else
 			parent->parent->l = child;
-		}
+
 		child->parent = parent->parent;
 		free(parent);
 		radix->num_active_node--;
 		return;
 	}
-	if (node->r) {
+	if (node->r)
 		child = node->r;
-	} else {
-		assert(node->l);
+	else
 		child = node->l;
-	}
+
 	parent = node->parent;
 	child->parent = parent;
 
@@ -563,16 +526,13 @@ radix_remove(radix_tree_t *radix, radix_node_t *node)
 	radix->num_active_node--;
 
 	if (parent == NULL) {
-		assert(radix->head == node);
 		radix->head = child;
 		return;
 	}
-	if (parent->r == node) {
+	if (parent->r == node)
 		parent->r = child;
-	} else {
-		assert(parent->l == node);
+	else
 		parent->l = child;
-	}
 }
 
 
@@ -648,4 +608,3 @@ prefix_ntop(prefix_t *prefix, char *buf, size_t len)
 
 	return (buf);
 }
-

@@ -10,6 +10,7 @@
  - (djm) KNF and GC radix.h
  - (djm) unifdef radix.c
  - (djm) KNF radix.c (more remains)
+ - (djm) Kill asserts() in radix.c, more KNF (starting to be readable now)
 
 20041121
  - (djm) Fix a bug: forgot to set the exception type when trying to get 
