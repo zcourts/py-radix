@@ -1,7 +1,10 @@
-- Iterator support for Radix
-
 - Extend Radix.methods to take (network, prefixlen) arguments
 
 - tree.delete(RadixNode)
 
 - thread safety
+
+- radix code doesn't check family, so users must keep separate trees
+  - Keep a separate v4/v6 trees; vs.
+  - Modify lookup/search to treat first bit as family==AF_INET?
+

@@ -9,6 +9,7 @@
    avoid all of the introspection breakage of providing our get/setattr 
    functions
  - (djm) Add RadixNode docstring
+ - (djm) Add iterator support
 
 20041118
  - (djm) Start the changelog

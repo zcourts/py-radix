@@ -20,6 +20,11 @@
 
 /* $Id$ */
 
+/* Prototypes */
+struct _RadixObject;
+struct _RadixIterObject;
+static struct _RadixIterObject *newRadixIterObject(struct _RadixObject *);
+
 /* ------------------------------------------------------------------------ */
 
 /* RadixNode: tree nodes */
@@ -143,7 +148,7 @@ static PyTypeObject RadixNode_Type = {
 
 /* ------------------------------------------------------------------------ */
 
-typedef struct {
+typedef struct _RadixObject {
 	PyObject_HEAD
 	radix_tree_t *rt;	/* Actual radix tree */
 } RadixObject;
@@ -384,6 +389,12 @@ Radix_nodes(RadixObject *self, PyObject *args)
 	return (cbctx.ret);
 }
 
+static PyObject *
+Radix_getiter(RadixObject *self)
+{
+	return (PyObject *)newRadixIterObject(self);
+}
+
 PyDoc_STRVAR(Radix_doc, "Radix tree");
 
 static PyMethodDef Radix_methods[] = {
@@ -425,9 +436,131 @@ static PyTypeObject Radix_Type = {
 	0,			/*tp_clear*/
 	0,			/*tp_richcompare*/
 	0,			/*tp_weaklistoffset*/
-	0,			/*tp_iter*/
+	(getiterfunc)Radix_getiter, /*tp_iter*/
 	0,			/*tp_iternext*/
 	Radix_methods,		/*tp_methods*/
+	0,			/*tp_members*/
+	0,			/*tp_getset*/
+	0,			/*tp_base*/
+	0,			/*tp_dict*/
+	0,			/*tp_descr_get*/
+	0,			/*tp_descr_set*/
+	0,			/*tp_dictoffset*/
+	0,			/*tp_init*/
+	0,			/*tp_alloc*/
+	0,			/*tp_new*/
+	0,			/*tp_free*/
+	0,			/*tp_is_gc*/
+};
+
+/* ------------------------------------------------------------------------ */
+
+/* RadixIter: radix tree iterator */
+
+typedef struct _RadixIterObject {
+	PyObject_HEAD
+	RadixObject *parent;
+        radix_node_t *iterstack[RADIX_MAXBITS+1];
+        radix_node_t **sp;
+        radix_node_t *rn;
+} RadixIterObject;
+
+static PyTypeObject RadixIter_Type;
+
+static RadixIterObject *
+newRadixIterObject(RadixObject *parent)
+{
+	RadixIterObject *self;
+
+	self = PyObject_New(RadixIterObject, &RadixIter_Type);
+	if (self == NULL)
+		return NULL;
+
+	self->parent = parent;
+	Py_XINCREF(self->parent);
+
+	self->sp = self->iterstack;
+	self->rn = self->parent->rt->head;
+
+	return self;
+}
+
+/* RadixIter methods */
+
+static void
+RadixIter_dealloc(RadixIterObject *self)
+{
+	PyObject_Del(self);
+}
+
+static PyObject *
+RadixIter_iternext(RadixIterObject *self)
+{
+        radix_node_t *node;
+	PyObject *ret;
+
+ again:
+	if ((node = self->rn) == NULL) {
+		Py_XDECREF(self->parent);
+		return NULL;
+	}
+
+	/* Get next node */
+	if (self->rn->l) {
+		if (self->rn->r)
+			*self->sp++ = self->rn->r;
+		self->rn = self->rn->l;
+	} else if (self->rn->r)
+		self->rn = self->rn->r;
+	else if (self->sp != self->iterstack)
+		self->rn = *(--self->sp);
+	else
+		self->rn = NULL;
+
+	if (node->prefix == NULL || node->data == NULL)
+		goto again;
+
+	ret = node->data;
+	Py_INCREF(ret);
+	return (ret);
+}
+
+PyDoc_STRVAR(RadixIter_doc, 
+"Radix tree iterator");
+
+static PyTypeObject RadixIter_Type = {
+	/* The ob_type field must be initialized in the module init function
+	 * to be portable to Windows without using C++. */
+	PyObject_HEAD_INIT(NULL)
+	0,			/*ob_size*/
+	"radix.RadixIter",	/*tp_name*/
+	sizeof(RadixIterObject),/*tp_basicsize*/
+	0,			/*tp_itemsize*/
+	/* methods */
+	(destructor)RadixIter_dealloc, /*tp_dealloc*/
+	0,			/*tp_print*/
+	0,			/*tp_getattr*/
+	0,			/*tp_setattr*/
+	0,			/*tp_compare*/
+	0,			/*tp_repr*/
+	0,			/*tp_as_number*/
+	0,			/*tp_as_sequence*/
+	0,			/*tp_as_mapping*/
+	0,			/*tp_hash*/
+	0,			/*tp_call*/
+	0,			/*tp_str*/
+	0,			/*tp_getattro*/
+	0,			/*tp_setattro*/
+	0,			/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,	/*tp_flags*/
+	RadixIter_doc,		/*tp_doc*/
+	0,			/*tp_traverse*/
+	0,			/*tp_clear*/
+	0,			/*tp_richcompare*/
+	0,			/*tp_weaklistoffset*/
+	0,			/*tp_iter*/
+	(iternextfunc)RadixIter_iternext, /*tp_iternext*/
+	0,			/*tp_methods*/
 	0,			/*tp_members*/
 	0,			/*tp_getset*/
 	0,			/*tp_base*/
@@ -504,13 +637,19 @@ Simple example:\n\
 	print rnode.family	# system-dependant (same as socket.AF_INET)\n\
 \n\
 	# IPv6 prefixes are fully supported\n\
+	# NB. Don't mix IPv4 and IPv6 in the same tree!\n\
 	rnode = rtree.add(\"2001:200::/32\")\n\
 	rnode = rtree.add(\"::/0\")\n\
 \n\
 	# Use the nodes() function to return all prefixes entered\n\
 	nodes = rtree.nodes()\n\
 	for rnode in nodes:\n\
-  		print rnode.prefix
+  		print rnode.prefix\n\
+\n\
+	# You can also directly iterate over the tree itself\n\
+	# this would save some memory if the tree is big\n\
+	for rnode in rtree:\n\
+  		print rnode.prefix\n\
 ");
 
 PyMODINIT_FUNC

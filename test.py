@@ -110,8 +110,11 @@ class TestRadix(unittest.TestCase):
 
 	def testnodes(self):
 		tree = radix.Radix()
-		prefixes = [ "10.0.0.0/8", "127.0.0.1/32", "::1/128", 
-		    "2000::/16", "10.1.0.0/16", "10.100.100.100/32" ]
+		prefixes = [
+			"10.0.0.0/8", "127.0.0.1/32", "::1/128",
+			"2000::/16", "10.1.0.0/16", "10.100.100.100/32", 
+#			"0.0.0.0/0", "a00::/8", "::/0"
+		]
 		prefixes.sort()
 		for prefix in prefixes:
 			tree.add(prefix)
@@ -132,6 +135,22 @@ class TestRadix(unittest.TestCase):
 		node2 = tree.add("10.0.0.0/8")
 		self.assert_(node1 is node2)
 		self.assert_(node1.prefix is node2.prefix)	
+
+	def testiter(self):
+		tree = radix.Radix()
+		prefixes = [
+			"10.0.0.0/8", "127.0.0.1/32", "::1/128",
+			"2000::/16", "10.1.0.0/16", "10.100.100.100/32", 
+#			"0.0.0.0/0", "a00::/8", "::/0"
+		]
+		prefixes.sort()
+		for prefix in prefixes:
+			tree.add(prefix)
+		iterprefixes = []
+		for node in tree:
+			iterprefixes.append(node.prefix)
+		iterprefixes.sort()
+		self.assertEqual(iterprefixes, prefixes)
 
 def main():
 	unittest.main()
