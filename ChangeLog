@@ -1,3 +1,7 @@
+20041122
+ - (djm) Raise a RuntimeWarning and abort iteration if the tree changes while
+   we are iterating over it
+
 20041121
  - (djm) Fix a bug: forgot to set the exception type when trying to get 
    RadixNode members that don't exist

@@ -152,6 +152,7 @@ typedef struct _RadixObject {
 	PyObject_HEAD
 	radix_tree_t *rt;	/* Actual radix tree */
 	int family;		/* XXX - hack until we fix shared v4/v6 trees */
+	unsigned int gen_id;	/* Detect modification during iterations */
 } RadixObject;
 
 static PyTypeObject Radix_Type;
@@ -168,6 +169,7 @@ newRadixObject(PyObject *arg)
 		return (NULL);
 	self->rt = rt;
 	self->family = -1;
+	self->gen_id = 0;
 	return (self);
 }
 
@@ -248,6 +250,7 @@ Radix_add(RadixObject *self, PyObject *args)
 	} else
 		node_obj = node->data;
 
+	self->gen_id++;
 	Py_XINCREF(node_obj);
 	return (PyObject *)node_obj;
 }
@@ -288,6 +291,7 @@ Radix_delete(RadixObject *self, PyObject *args)
 
 	radix_remove(self->rt, node);
 
+	self->gen_id++;
 	Py_INCREF(Py_None);
 	return Py_None;
 }
@@ -473,6 +477,7 @@ typedef struct _RadixIterObject {
         radix_node_t *iterstack[RADIX_MAXBITS+1];
         radix_node_t **sp;
         radix_node_t *rn;
+	unsigned int gen_id;	/* Detect tree modifications */
 } RadixIterObject;
 
 static PyTypeObject RadixIter_Type;
@@ -491,6 +496,7 @@ newRadixIterObject(RadixObject *parent)
 
 	self->sp = self->iterstack;
 	self->rn = self->parent->rt->head;
+	self->gen_id = self->parent->gen_id;
 
 	return self;
 }
@@ -500,6 +506,7 @@ newRadixIterObject(RadixObject *parent)
 static void
 RadixIter_dealloc(RadixIterObject *self)
 {
+	Py_XDECREF(self->parent);
 	PyObject_Del(self);
 }
 
@@ -509,11 +516,15 @@ RadixIter_iternext(RadixIterObject *self)
         radix_node_t *node;
 	PyObject *ret;
 
- again:
-	if ((node = self->rn) == NULL) {
-		Py_XDECREF(self->parent);
-		return NULL;
+	if (self->gen_id != self->parent->gen_id) {
+		PyErr_SetString(PyExc_RuntimeWarning,
+		    "Radix tree modified during iteration");
+		return (NULL);
 	}
+
+ again:
+	if ((node = self->rn) == NULL)
+		return NULL;
 
 	/* Get next node */
 	if (self->rn->l) {
@@ -644,10 +655,12 @@ Simple example:\n\
 	print rnode.network	# -> \"10.0.0.0\"\n\
 	print rnode.prefix	# -> \"10.0.0.0/8\"\n\
 	print rnode.prefixlen	# -> 8\n\
-	print rnode.family	# system-dependant (same as socket.AF_INET)\n\
+	print rnode.family	# -> socket.AF_INET\n\
 \n\
-	# IPv6 prefixes are fully supported\n\
+	# IPv6 prefixes are fully supported (in separate trees)\n\
 	# NB. Don't mix IPv4 and IPv6 in the same tree!\n\
+	# This code would raise a ValueError, because the tree\n\
+	# already contains IPv4 prefixes\n\
 	rnode = rtree.add(\"2001:200::/32\")\n\
 	rnode = rtree.add(\"::/0\")\n\
 \n\
@@ -658,6 +671,9 @@ Simple example:\n\
 \n\
 	# You can also directly iterate over the tree itself\n\
 	# this would save some memory if the tree is big\n\
+	# NB. Don't modify the tree (add or delete nodes) while\n\
+	# iterating otherwise you will abort the iteration and\n\
+	# receive a RuntimeWarning.\n\
 	for rnode in rtree:\n\
   		print rnode.prefix\n\
 ");
