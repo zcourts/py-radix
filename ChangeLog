@@ -1,5 +1,6 @@
 20041122
  - (djm) Use RFC3849 IPv6 prefixes in documentation
+ - (djm) Some stupid platforms still lack strl*, so avoid their use
 
 20041122
  - (djm) Raise a RuntimeWarning and abort iteration if the tree changes while

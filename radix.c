@@ -558,11 +558,15 @@ prefix_t
 	struct addrinfo hints, *ai;
 	void *addr;
 	prefix_t *ret;
+	size_t slen;
 
 	ret = NULL;
 
-	if (strlcpy(save, string, sizeof(save)) >= sizeof(save))
+	/* Copy the string to parse, because we modify it */
+	if ((slen = strlen(string) + 1) > sizeof(save))
 		return (NULL);
+	memcpy(save, string, slen);
+
 	if ((cp = strchr(save, '/')) != NULL) {
 		if (len != -1 )
 			return (NULL);
