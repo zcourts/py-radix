@@ -544,7 +544,7 @@ sanitise_mask(u_char *addr, u_int masklen, u_int maskbits)
 	u_int j = masklen % 8;
 
 	if (j != 0) {
-		addr[i] &= addr[i] & (~0) << j;
+		addr[i] &= (~0) << (8 - j);
 		i++;
 	}
 	for (; i < maskbits / 8; i++)

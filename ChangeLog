@@ -1,3 +1,7 @@
+20050425
+ - (djm) Fix bug that could corrupt some prefixes; reported by 
+   siganos AT cs.ucr.edu
+
 20041123
  - (djm) Use RFC3849 IPv6 prefixes in documentation
  - (djm) Some stupid platforms still lack strl*, so avoid their use

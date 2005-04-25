@@ -289,6 +289,11 @@ class TestRadix(unittest.TestCase):
 		self.assertEquals(num_nodes_in - num_nodes_del,
 		    len(tree.nodes()))
 
+	def test_22__broken_sanitise(self):
+		tree = radix.Radix()		
+		node = tree.add("255.255.255.255/15")
+		self.assertEquals(node.prefix, "255.254.0.0/15")
+
 def main():
 	unittest.main()
 
