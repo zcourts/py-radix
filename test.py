@@ -16,7 +16,7 @@
 
 # $Id$
 
-import radix;
+import radix
 import unittest
 import socket
 
@@ -62,15 +62,15 @@ class TestRadix(unittest.TestCase):
 		node2 = tree.add("10.0.0.0/16")
 		node3 = tree.add("10.0.0.0/24")
 		node2.data["foo"] = 12345
-		node = tree.search_exact("127.0.0.1");
+		node = tree.search_exact("127.0.0.1")
 		self.assertEqual(node, None)
-		node = tree.search_exact("10.0.0.0");
+		node = tree.search_exact("10.0.0.0")
 		self.assertEqual(node, None)
-		node = tree.search_exact("10.0.0.0/24");
+		node = tree.search_exact("10.0.0.0/24")
 		self.assertEqual(node, node3)
-		node = tree.search_exact("10.0.0.0/8");
+		node = tree.search_exact("10.0.0.0/8")
 		self.assertEqual(node, node1)
-		node = tree.search_exact("10.0.0.0/16");
+		node = tree.search_exact("10.0.0.0/16")
 		self.assertEqual(node.data["foo"], 12345)
 				
 	def test_04__search_best(self):
@@ -78,13 +78,13 @@ class TestRadix(unittest.TestCase):
 		node1 = tree.add("10.0.0.0/8")
 		node2 = tree.add("10.0.0.0/16")
 		node3 = tree.add("10.0.0.0/24")
-		node = tree.search_best("127.0.0.1");
+		node = tree.search_best("127.0.0.1")
 		self.assertEqual(node, None)
-		node = tree.search_best("10.0.0.0");
+		node = tree.search_best("10.0.0.0")
 		self.assertEqual(node, node3)
-		node = tree.search_best("10.0.0.0/24");
+		node = tree.search_best("10.0.0.0/24")
 		self.assertEqual(node, node3)
-		node = tree.search_best("10.0.1.0/24");
+		node = tree.search_best("10.0.1.0/24")
 		self.assertEqual(node, node2)
 				
 	def test_05__concurrent_trees(self):
@@ -102,12 +102,12 @@ class TestRadix(unittest.TestCase):
 		node2_3.data["blah"] = 45678
 		self.assertNotEqual(tree1, tree2)
 		self.assertNotEqual(node1_2, node2_2)
-		node = tree1.search_best("10.0.1.0/24");
+		node = tree1.search_best("10.0.1.0/24")
 		self.assertEqual(node, node1_2)
 		self.assertNotEqual(node, node2_2)
-		node = tree2.search_best("20.0.0.0/24");
+		node = tree2.search_best("20.0.0.0/24")
 		self.assertEqual(node, None)
-		node = tree2.search_best("10.0.0.10");
+		node = tree2.search_best("10.0.0.10")
 		self.assertEqual(node.data["blah"], 45678)
 
 	def test_06__deletes(self):
@@ -117,7 +117,7 @@ class TestRadix(unittest.TestCase):
 		tree.delete("10.0.0.0/24")
 		self.assertRaises(KeyError, tree.delete, "127.0.0.1")
 		self.assertRaises(KeyError, tree.delete, "10.0.0.0/24")
-		node = tree.search_best("10.0.0.10");
+		node = tree.search_best("10.0.0.10")
 		self.assertEqual(node, node1)
 
 	def test_07__nodes(self):
@@ -216,8 +216,8 @@ class TestRadix(unittest.TestCase):
 		tree = radix.Radix()
 		node1 = tree.add("255.255.255.255", 32)
 		node2 = tree.add("ffff::/32")
-		node1_o = tree.search_best("255.255.255.255");
-		node2_o = tree.search_best("ffff::");
+		node1_o = tree.search_best("255.255.255.255")
+		node2_o = tree.search_best("ffff::")
 		self.assert_(node1 is node1_o)
 		self.assert_(node2 is node2_o)
 		self.assertNotEquals(node1.prefix, node2.prefix)

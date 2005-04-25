@@ -1,6 +1,7 @@
 20050425
  - (djm) Fix bug that could corrupt some prefixes; reported by 
    siganos AT cs.ucr.edu
+ - (djm) Delete semicolons from EOL in test.py
 
 20041123
  - (djm) Use RFC3849 IPv6 prefixes in documentation
