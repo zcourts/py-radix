@@ -14,4 +14,7 @@ tree.search_containing(network) -> RadixNode or None
 
 tree.num_prefixes()
 
+dict-like interface:
+	tree[addr] = user_object
+
 $Id$
