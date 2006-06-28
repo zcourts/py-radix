@@ -1,3 +1,6 @@
+20060628
+ - (djm) Add RPM spec file
+
 20050425
  - (djm) Fix bug that could corrupt some prefixes; reported by 
    siganos AT cs.ucr.edu
