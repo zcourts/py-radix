@@ -77,7 +77,6 @@ typedef struct _prefix_t {
 		struct in6_addr sin6;
 	} add;
 } prefix_t;
-typedef void (*void_fn_t)();
 
 void Deref_Prefix(prefix_t *prefix);
 
@@ -99,13 +98,16 @@ typedef struct _radix_tree_t {
 	int num_active_node;		/* for debug purpose */
 } radix_tree_t;
 
+/* Type of callback function */
+typedef void (*rdx_cb_t)(radix_node_t *, void *);
+
 radix_tree_t *New_Radix(void);
-void Destroy_Radix(radix_tree_t *radix, void_fn_t func, void *cbctx);
+void Destroy_Radix(radix_tree_t *radix, rdx_cb_t func, void *cbctx);
 radix_node_t *radix_lookup(radix_tree_t *radix, prefix_t *prefix);
 void radix_remove(radix_tree_t *radix, radix_node_t *node);
 radix_node_t *radix_search_exact(radix_tree_t *radix, prefix_t *prefix);
 radix_node_t *radix_search_best(radix_tree_t *radix, prefix_t *prefix);
-void radix_process(radix_tree_t *radix, void_fn_t func, void *cbctx);
+void radix_process(radix_tree_t *radix, rdx_cb_t func, void *cbctx);
 
 #define RADIX_MAXBITS 128
 

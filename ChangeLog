@@ -1,5 +1,7 @@
 20060628
  - (djm) Add RPM spec file
+ - (djm) Hygene fixes: be more strict with types, use Python memory
+   allocators instead of libc malloc/free
 
 20050425
  - (djm) Fix bug that could corrupt some prefixes; reported by 

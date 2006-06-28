@@ -220,7 +220,7 @@ Radix_dealloc(RadixObject *self)
 static prefix_t
 *args_to_prefix(char *addr, char *packed, int packlen, long prefixlen)
 {
-	prefix_t *prefix;
+	prefix_t *prefix = NULL;
 
 	if (addr != NULL && packed != NULL) {
 		PyErr_SetString(PyExc_TypeError,
