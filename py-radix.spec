@@ -1,5 +1,3 @@
-%define modname Optik
-
 Name: py-radix
 Summary: Radix tree data structure for Python
 Version: 0.4
@@ -8,9 +6,9 @@ Source0: http://www2.mindrot.org/files/py-radix/py-radix-%{version}.tar.gz
 License: BSD
 Group: Development/Libraries
 BuildRoot: %{_tmppath}/%{name}-buildroot
-Requires: python-devel, python, gcc
+Requires: %{__python}
+BuildRequires: python-devel, gcc
 Url: http://www.mindrot.org/py-radix.html
-BuildRequires: %{__python}
 
 %description
 py-radix is an implementation of a radix tree for Python, which 
