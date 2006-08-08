@@ -1,3 +1,6 @@
+20060808
+ - (djm) Support for Win32 (AF_INET6 is still broken though)
+
 20060628
  - (djm) Add RPM spec file
  - (djm) Hygene fixes: be more strict with types, use Python memory

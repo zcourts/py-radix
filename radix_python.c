@@ -736,81 +736,81 @@ static PyMethodDef radix_methods[] = {
 };
 
 PyDoc_STRVAR(module_doc,
-"Implementation of a radix tree data structure for network prefixes.\n\
-\n\
-The radix tree is the data structure most commonly used for routing\n\
-table lookups. It efficiently stores network prefixes of varying\n\
-lengths and allows fast lookups of containing networks.\n\
-\n\
-Simple example:\n\
-\n\
-	import radix\n\
-\n\
-	# Create a new tree\n\
-	rtree = radix.Radix()\n\
-\n\
-	# Adding a node returns a RadixNode object. You can create\n\
-	# arbitrary members in its 'data' dict to store your data\n\
-	rnode = rtree.add(\"10.0.0.0/8\")\n\
-	rnode.data[\"blah\"] = \"whatever you want\"\n\
-\n\
-	# You can specify nodes as CIDR addresses, or networks with\n\
-	# separate mask lengths. The following three invocations are\n\
-	# identical:\n\
-	rnode = rtree.add(\"10.0.0.0/16\")\n\
-	rnode = rtree.add(\"10.0.0.0\", 16)\n\
-	rnode = rtree.add(network = \"10.0.0.0\", masklen = 16)\n\
-\n\
-	# It is also possible to specify nodes using binary packed\n\
-	# addresses, such as those returned by the socket module\n\
-	# functions. In this case, the radix module will assume that\n\
-	# a four-byte address is an IPv4 address and a sixteen-byte\n\
-	# address is an IPv6 address. For example:\n\
-	binary_addr = inet_ntoa(\"172.18.22.0\")\n\
-	rnode = rtree.add(packed = binary_addr, masklen = 23)\n\
-\n\
-	# Exact search will only return prefixes you have entered\n\
-	# You can use all of the above ways to specify the address\n\
-	rnode = rtree.search_exact(\"10.0.0.0/8\")\n\
-	# Get your data back out\n\
-	print rnode.data[\"blah\"]\n\
-	# Use a packed address\n\
-	addr = socket.inet_ntoa(\"10.0.0.0\")\n\
-	rnode = rtree.search_exact(packed = addr, masklen = 8)\n\
-\n\
-	# Best-match search will return the longest matching prefix\n\
-	# that contains the search term (routing-style lookup)\n\
-	rnode = rtree.search_best(\"10.123.45.6\")\n\
-\n\
-	# There are a couple of implicit members of a RadixNode:\n\
-	print rnode.network	# -> \"10.0.0.0\"\n\
-	print rnode.prefix	# -> \"10.0.0.0/8\"\n\
-	print rnode.prefixlen	# -> 8\n\
-	print rnode.family	# -> socket.AF_INET\n\
-	print rnode.packed	# -> '\\n\\x00\\x00\\x00'\n\
-\n\
-	# IPv6 prefixes are fully supported in the same tree\n\
-	rnode = rtree.add(\"2001:DB8::/32\")\n\
-	rnode = rtree.add(\"::/0\")\n\
-\n\
-	# Use the nodes() method to return all RadixNodes created\n\
-	nodes = rtree.nodes()\n\
-	for rnode in nodes:\n\
-  		print rnode.prefix\n\
-\n\
-	# The prefixes() method will return all the prefixes (as a\n\
-	# list of strings) that have been entered\n\
-	prefixes = rtree.prefixes()\n\
-\n\
-	# You can also directly iterate over the tree itself\n\
-	# this would save some memory if the tree is big\n\
-	# NB. Don't modify the tree (add or delete nodes) while\n\
-	# iterating otherwise you will abort the iteration and\n\
-	# receive a RuntimeWarning. Changing a node's data dict\n\
-	# is permitted.\n\
-	for rnode in rtree:\n\
-  		print rnode.prefix\n\
-");
+"Implementation of a radix tree data structure for network prefixes.\n"
+"\n"
+"The radix tree is the data structure most commonly used for routing\n"
+"table lookups. It efficiently stores network prefixes of varying\n"
+"lengths and allows fast lookups of containing networks.\n"
+"\n"
+"Simple example:\n"
+"\n"
+"	import radix\n"
+"\n"
+"	# Create a new tree\n"
+"	rtree = radix.Radix()\n"
+"\n"
+"	# Adding a node returns a RadixNode object. You can create\n"
+"	# arbitrary members in its 'data' dict to store your data\n"
+"	rnode = rtree.add(\"10.0.0.0/8\")\n"
+"	rnode.data[\"blah\"] = \"whatever you want\"\n"
+"\n"
+"	# You can specify nodes as CIDR addresses, or networks with\n"
+"	# separate mask lengths. The following three invocations are\n"
+"	# identical:\n"
+"	rnode = rtree.add(\"10.0.0.0/16\")\n"
+"	rnode = rtree.add(\"10.0.0.0\", 16)\n"
+"	rnode = rtree.add(network = \"10.0.0.0\", masklen = 16)\n"
+"\n"
+"	# It is also possible to specify nodes using binary packed\n"
+"	# addresses, such as those returned by the socket module\n"
+"	# functions. In this case, the radix module will assume that\n"
+"	# a four-byte address is an IPv4 address and a sixteen-byte\n"
+"	# address is an IPv6 address. For example:\n"
+"	binary_addr = inet_ntoa(\"172.18.22.0\")\n"
+"	rnode = rtree.add(packed = binary_addr, masklen = 23)\n"
+"\n"
+"	# Exact search will only return prefixes you have entered\n"
+"	# You can use all of the above ways to specify the address\n"
+"	rnode = rtree.search_exact(\"10.0.0.0/8\")\n"
+"	# Get your data back out\n"
+"	print rnode.data[\"blah\"]\n"
+"	# Use a packed address\n"
+"	addr = socket.inet_ntoa(\"10.0.0.0\")\n"
+"	rnode = rtree.search_exact(packed = addr, masklen = 8)\n"
+"\n"
+"	# Best-match search will return the longest matching prefix\n"
+"	# that contains the search term (routing-style lookup)\n"
+"	rnode = rtree.search_best(\"10.123.45.6\")\n"
+"\n"
+"	# There are a couple of implicit members of a RadixNode:\n"
+"	print rnode.network	# -> \"10.0.0.0\"\n"
+"	print rnode.prefix	# -> \"10.0.0.0/8\"\n"
+"	print rnode.prefixlen	# -> 8\n"
+"	print rnode.family	# -> socket.AF_INET\n"
+"	print rnode.packed	# -> '\\n\\x00\\x00\\x00'\n"
+"\n"
+"	# IPv6 prefixes are fully supported in the same tree\n"
+"	rnode = rtree.add(\"2001:DB8::/32\")\n"
+"	rnode = rtree.add(\"::/0\")\n"
+"\n"
+"	# Use the nodes() method to return all RadixNodes created\n"
+"	nodes = rtree.nodes()\n"
+"	for rnode in nodes:\n"
+"  		print rnode.prefix\n"
+"\n"
+"	# The prefixes() method will return all the prefixes (as a\n"
+"	# list of strings) that have been entered\n"
+"	prefixes = rtree.prefixes()\n"
+"\n"
+"	# You can also directly iterate over the tree itself\n"
+"	# this would save some memory if the tree is big\n"
+"	# NB. Don't modify the tree (add or delete nodes) while\n"
+"	# iterating otherwise you will abort the iteration and\n"
+"	# receive a RuntimeWarning. Changing a node's data dict\n"
+"	# is permitted.\n"
+"	for rnode in rtree:\n"
+"  		print rnode.prefix\n"
+);
 
 PyMODINIT_FUNC
 initradix(void)
@@ -822,5 +822,5 @@ initradix(void)
 	if (PyType_Ready(&RadixNode_Type) < 0)
 		return;
 	m = Py_InitModule3("radix", radix_methods, module_doc);
-	PyModule_AddStringConstant(m, "__version__", PROGVER);
+	PyModule_AddStringConstant(m, "__version__", "0.4");
 }

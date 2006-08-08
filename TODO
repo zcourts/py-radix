@@ -1,3 +1,5 @@
+Fix bug(?) on Win32: getaddrinfo doesn't seem to parse IPv6 addresses
+
 - Maybe Extend Radix methods to accept (network, mask) (contiguous masks only)
 
 - tree.delete(RadixNode)

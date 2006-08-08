@@ -58,13 +58,9 @@
 #include "Python.h"
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <netdb.h>
 
 #include "radix.h"
 
@@ -338,7 +334,7 @@ radix_node_t
 	radix_node_t *node, *new_node, *parent, *glue;
 	u_char *addr, *test_addr;
 	u_int bitlen, check_bit, differ_bit;
-	int i, j, r;
+	u_int i, j, r;
 
 	if (radix->head == NULL) {
 		if ((node = PyMem_Malloc(sizeof(*node))) == NULL)
