@@ -221,6 +221,7 @@ static prefix_t
 *args_to_prefix(char *addr, char *packed, int packlen, long prefixlen)
 {
 	prefix_t *prefix = NULL;
+	const char *errmsg;
 
 	if (addr != NULL && packed != NULL) {
 		PyErr_SetString(PyExc_TypeError,
@@ -235,8 +236,8 @@ static prefix_t
 	}
 
 	if (addr != NULL) {		/* Parse a string address */
-		if ((prefix = prefix_pton(addr, prefixlen)) == NULL) {
-			PyErr_SetString(PyExc_ValueError,
+		if ((prefix = prefix_pton(addr, prefixlen, &errmsg)) == NULL) {
+			PyErr_SetString(PyExc_ValueError, errmsg ? errmsg :
 			    "Invalid address format");
 		}
 	} else if (packed != NULL) {	/* "parse" a packed binary address */
@@ -812,10 +813,42 @@ PyDoc_STRVAR(module_doc,
 "  		print rnode.prefix\n"
 );
 
+#if defined(_MSC_VER)
+static void cleanupradix(void)
+{
+	WSACleanup();
+}
+#endif
+
 PyMODINIT_FUNC
 initradix(void)
 {
 	PyObject *m;
+#if defined(_MSC_VER)
+	WSADATA winsock_data;
+	int r;
+	char errbuf[256];
+
+	r = WSAStartup(0x0202, &winsock_data);
+	switch (r) {
+	case 0:
+		Py_AtExit(cleanupradix);
+		break;
+	case WSASYSNOTREADY:
+		PyErr_SetString(PyExc_ImportError, "Winsock error: "
+		    "network subsystem not ready");
+		return;
+	case WSAEINVAL:
+	case WSAVERNOTSUPPORTED:
+		PyErr_SetString(PyExc_ImportError, "Winsock error: "
+		    "required winsock version 2.2 not supported");
+		return;
+	default:
+		snprintf(errbuf, sizeof(errbuf), "Winsock error: code %d", r);
+		PyErr_SetString(PyExc_ImportError, errbuf);
+		return;
+	}
+#endif
 
 	if (PyType_Ready(&Radix_Type) < 0)
 		return;

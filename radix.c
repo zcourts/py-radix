@@ -556,37 +556,50 @@ sanitise_mask(u_char *addr, u_int masklen, u_int maskbits)
 }
 
 prefix_t
-*prefix_pton(const char *string, long len)
+*prefix_pton(const char *string, long len, const char **errmsg)
 {
 	char save[256], *cp, *ep;
 	struct addrinfo hints, *ai;
 	void *addr;
 	prefix_t *ret;
 	size_t slen;
+	int r;
 
 	ret = NULL;
 
 	/* Copy the string to parse, because we modify it */
-	if ((slen = strlen(string) + 1) > sizeof(save))
+	if ((slen = strlen(string) + 1) > sizeof(save)) {
+		*errmsg = "string too long";
 		return (NULL);
+	}
 	memcpy(save, string, slen);
 
 	if ((cp = strchr(save, '/')) != NULL) {
-		if (len != -1 )
+		if (len != -1 ) {
+			*errmsg = "masklen specified twice";
 			return (NULL);
+		}
 		*cp++ = '\0';
 		len = strtol(cp, &ep, 10);
-		if (*cp == '\0' || *ep != '\0' || len < 0)
+		if (*cp == '\0' || *ep != '\0' || len < 0) {
+			*errmsg = "could not parse masklen";
 			return (NULL);
+		}
 		/* More checks below */
 	}
 	memset(&hints, '\0', sizeof(hints));
 	hints.ai_flags = AI_NUMERICHOST;
 
-	if (getaddrinfo(save, NULL, &hints, &ai) != 0)
-		return (NULL);
-	if (ai == NULL || ai->ai_addr == NULL)
-		return (NULL);
+	if ((r = getaddrinfo(save, NULL, &hints, &ai)) != 0) {
+		snprintf(save, sizeof(save), "getaddrinfo: %s:,
+		    gai_strerror(r));
+		*errmsg = save;
+		return NULL;
+	}
+	if (ai == NULL || ai->ai_addr == NULL) {
+		*errmsg = "getaddrinfo returned no result";
+		goto out;
+	}
 	switch (ai->ai_addr->sa_family) {
 	case AF_INET:
 		if (len == -1)
@@ -609,6 +622,8 @@ prefix_t
 	}
 
 	ret = New_Prefix2(ai->ai_addr->sa_family, addr, len, NULL);
+	if (ret == NULL)
+		*errmsg = "New_Prefix2 failed";
 out:
 	freeaddrinfo(ai);
 	return (ret);
