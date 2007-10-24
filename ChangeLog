@@ -1,3 +1,7 @@
+20071010
+- (djm) fix for Windows platforms: WSAStartup was not called, resulting
+  in failures inside getaddrinfo. Report from harpreet.sawhney AT gmail.com
+
 20060808
  - (djm) Support for Win32 (AF_INET6 is still broken though)
 

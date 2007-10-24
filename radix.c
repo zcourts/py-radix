@@ -591,7 +591,7 @@ prefix_t
 	hints.ai_flags = AI_NUMERICHOST;
 
 	if ((r = getaddrinfo(save, NULL, &hints, &ai)) != 0) {
-		snprintf(save, sizeof(save), "getaddrinfo: %s:,
+		snprintf(save, sizeof(save), "getaddrinfo: %s:",
 		    gai_strerror(r));
 		*errmsg = save;
 		return NULL;
