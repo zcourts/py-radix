@@ -582,7 +582,7 @@ static PyObject *
 Radix_setstate(RadixObject *self, PyObject *args)
 {
 	PyObject *state, *tpl, *addr, *data;
-	Py_ssize_t len, i;
+	int len, i;
 	RadixNodeObject *node;
 	prefix_t *prefix;
 	char *addr_string;

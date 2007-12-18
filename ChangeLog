@@ -2,6 +2,7 @@
  - (djm) Implement pickle protocol via __reduce__ and __setstate__, inspired
    by wrapper from Erik Curiel (ecuriel AT kefta.com)
  - (djm) Crank version number to 0.5
+ - (djm) Make this compile on Python 2.4, which lacks Py_ssize_t
 
 20071010
 - (djm) fix for Windows platforms: WSAStartup was not called, resulting
