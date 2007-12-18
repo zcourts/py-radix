@@ -19,6 +19,8 @@
 import radix
 import unittest
 import socket
+import pickle
+import cPickle
 
 class TestRadix(unittest.TestCase):
 	def test_00__create_destroy(self):
@@ -293,6 +295,56 @@ class TestRadix(unittest.TestCase):
 		tree = radix.Radix()		
 		node = tree.add("255.255.255.255/15")
 		self.assertEquals(node.prefix, "255.254.0.0/15")
+
+	def test_21__pickle(self):
+		tree = radix.Radix()
+		num_nodes_in = 0
+		for i in range(0,128):
+			for j in range(0,128):
+				k = ((i + j) % 8) + 24
+				addr = "1.%d.%d.0" % (i, j)
+				node = tree.add(addr, k)
+				node.data["i"] = i
+				node.data["j"] = j
+				num_nodes_in += 1
+		tree_pickled = pickle.dumps(tree)
+		del tree
+		tree2 = pickle.loads(tree_pickled)
+		for i in range(0,128):
+			for j in range(0,128):
+				k = ((i + j) % 8) + 24
+				addr = "1.%d.%d.0" % (i, j)
+				node = tree2.search_exact(addr, k)
+				self.assertNotEquals(node, None)
+				self.assertEquals(node.data["i"], i)
+				self.assertEquals(node.data["j"], j)
+				node.data["j"] = j
+		self.assertEquals(len(tree2.nodes()), num_nodes_in)
+
+	def test_21__cpickle(self):
+		tree = radix.Radix()
+		num_nodes_in = 0
+		for i in range(0,128):
+			for j in range(0,128):
+				k = ((i + j) % 8) + 24
+				addr = "1.%d.%d.0" % (i, j)
+				node = tree.add(addr, k)
+				node.data["i"] = i
+				node.data["j"] = j
+				num_nodes_in += 1
+		tree_pickled = cPickle.dumps(tree)
+		del tree
+		tree2 = cPickle.loads(tree_pickled)
+		for i in range(0,128):
+			for j in range(0,128):
+				k = ((i + j) % 8) + 24
+				addr = "1.%d.%d.0" % (i, j)
+				node = tree2.search_exact(addr, k)
+				self.assertNotEquals(node, None)
+				self.assertEquals(node.data["i"], i)
+				self.assertEquals(node.data["j"], j)
+				node.data["j"] = j
+		self.assertEquals(len(tree2.nodes()), num_nodes_in)
 
 def main():
 	unittest.main()

@@ -1,6 +1,6 @@
 Name: py-radix
 Summary: Radix tree data structure for Python
-Version: 0.4
+Version: 0.5
 Release: 1
 Source0: http://www2.mindrot.org/files/py-radix/py-radix-%{version}.tar.gz
 License: BSD

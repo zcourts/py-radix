@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: py-radix
-Version: 0.4
+Version: 0.5
 Summary: Radix tree for storage and retrieval of network prefixes
 Home-page: http://www.mindrot.org/py-radix.html
 Author: Damien Miller

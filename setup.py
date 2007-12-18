@@ -19,7 +19,7 @@
 import sys
 from distutils.core import setup, Extension
 
-VERSION = "0.4"
+VERSION = "0.5"
 
 if __name__ == '__main__':
 	libs = []

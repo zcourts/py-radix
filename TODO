@@ -21,6 +21,4 @@ dict-like interface:
 
 "blur" prefix - reduce masklen
 
-pickle protocol support
-
 $Id$
