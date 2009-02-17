@@ -1,6 +1,8 @@
 20090217
  - (djm) Initialise error message when passed an invalid prefix length;
    report and patch from peter AT balland.net
+ - (djm) Don't leak node->packed attribute; report and patch from
+   screwdriver AT lxnt.info
 
 20071218
  - (djm) Implement pickle protocol via __reduce__ and __setstate__, inspired
