@@ -314,7 +314,8 @@ static radix_node_t
 	while (--cnt >= 0) {
 		node = stack[cnt];
 		if (comp_with_mask(prefix_tochar(node->prefix),
-		    prefix_tochar(prefix), node->prefix->bitlen))
+		    prefix_tochar(prefix), node->prefix->bitlen) &&
+		    node->prefix->bitlen <= bitlen)
 			return (node);
 	}
 	return (NULL);
