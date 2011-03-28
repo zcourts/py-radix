@@ -20,6 +20,22 @@
 
 /* $Id$ */
 
+/* for Py3K */
+#if PY_MAJOR_VERSION >= 3
+# define PyInt_FromLong			PyLong_FromLong
+# define PyString_AsString		PyBytes_AsString
+# define PyString_FromString		PyUnicode_FromString
+# define PyString_FromStringAndSize	PyBytes_FromStringAndSize
+#endif
+
+/* for version before 2.6 */
+#ifndef PyVarObject_HEAD_INIT
+# define PyVarObject_HEAD_INIT(type, size)	PyObject_HEAD_INIT(type) size,
+#endif
+#ifndef Py_TYPE
+# define Py_TYPE(ob)	(((PyObject*)(ob))->ob_type)
+#endif
+
 /* Prototypes */
 struct _RadixObject;
 struct _RadixIterObject;
@@ -115,8 +131,7 @@ PyDoc_STRVAR(RadixNode_doc,
 static PyTypeObject RadixNode_Type = {
 	/* The ob_type field must be initialized in the module init function
 	 * to be portable to Windows without using C++. */
-	PyObject_HEAD_INIT(NULL)
-	0,			/*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"radix.RadixNode",	/*tp_name*/
 	sizeof(RadixNodeObject),/*tp_basicsize*/
 	0,			/*tp_itemsize*/
@@ -169,7 +184,7 @@ typedef struct _RadixObject {
 } RadixObject;
 
 static PyTypeObject Radix_Type;
-#define Radix_CheckExact(op) ((op)->ob_type == &Radix_Type)
+#define Radix_CheckExact(op) (Py_TYPE(op) == &Radix_Type)
 
 static RadixObject *
 newRadixObject(void)
@@ -527,6 +542,10 @@ radix_getstate(RadixObject *self)
 	radix_node_t *node;
 	PyObject *ret;
 	RadixNodeObject *rnode;
+	PyObject *item_tuple;
+#if PY_MAJOR_VERSION >= 3
+	PyObject *prefix_bytes;
+#endif
 
 	if ((ret = PyList_New(0)) == NULL)
 		return NULL;
@@ -534,19 +553,33 @@ radix_getstate(RadixObject *self)
 	RADIX_WALK(self->rt4->head, node) {
 		if (node->data != NULL) {
 			rnode = (RadixNodeObject *)node->data;
-			PyList_Append(ret, Py_BuildValue("(OO)",
-			    rnode->prefix, rnode->user_attr));
-			Py_INCREF(rnode->prefix);
-			Py_INCREF(rnode->user_attr);
+#if PY_MAJOR_VERSION >= 3
+			prefix_bytes = PyUnicode_AsASCIIString(rnode->prefix);
+			item_tuple = Py_BuildValue("(OO)", prefix_bytes, rnode->user_attr);
+			PyList_Append(ret, item_tuple);
+			Py_DECREF(item_tuple);
+			Py_DECREF(prefix_bytes);
+#else
+			item_tuple = Py_BuildValue("(OO)", rnode->prefix, rnode->user_attr);
+			PyList_Append(ret, item_tuple);
+			Py_DECREF(item_tuple);
+#endif
 		}
 	} RADIX_WALK_END;
 	RADIX_WALK(self->rt6->head, node) {
 		if (node->data != NULL) {
 			rnode = (RadixNodeObject *)node->data;
-			PyList_Append(ret, Py_BuildValue("(OO)",
-			    rnode->prefix, rnode->user_attr));
-			Py_INCREF(rnode->prefix);
-			Py_INCREF(rnode->user_attr);
+#if PY_MAJOR_VERSION >= 3
+			prefix_bytes = PyUnicode_AsASCIIString(rnode->prefix);
+			item_tuple = Py_BuildValue("(OO)", prefix_bytes, rnode->user_attr);
+			PyList_Append(ret, item_tuple);
+			Py_DECREF(item_tuple);
+			Py_DECREF(prefix_bytes);
+#else
+			item_tuple = Py_BuildValue("(OO)", rnode->prefix, rnode->user_attr);
+			PyList_Append(ret, item_tuple);
+			Py_DECREF(item_tuple);
+#endif
 		}
 	} RADIX_WALK_END;
 
@@ -572,8 +605,7 @@ Radix_reduce(RadixObject *self, PyObject *args)
 		return NULL;
 
 	ret = Py_BuildValue("(O()O)", radix_constructor, state);
-	Py_XINCREF(radix_constructor);
-	Py_XINCREF(state);
+	Py_XDECREF(state);
 
 	return ret;
 }
@@ -652,8 +684,7 @@ static PyMethodDef Radix_methods[] = {
 static PyTypeObject Radix_Type = {
 	/* The ob_type field must be initialized in the module init function
 	 * to be portable to Windows without using C++. */
-	PyObject_HEAD_INIT(NULL)
-	0,			/*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"radix.Radix",		/*tp_name*/
 	sizeof(RadixObject),	/*tp_basicsize*/
 	0,			/*tp_itemsize*/
@@ -790,8 +821,7 @@ PyDoc_STRVAR(RadixIter_doc,
 static PyTypeObject RadixIter_Type = {
 	/* The ob_type field must be initialized in the module init function
 	 * to be portable to Windows without using C++. */
-	PyObject_HEAD_INIT(NULL)
-	0,			/*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"radix.RadixIter",	/*tp_name*/
 	sizeof(RadixIterObject),/*tp_basicsize*/
 	0,			/*tp_itemsize*/
@@ -938,6 +968,20 @@ PyDoc_STRVAR(module_doc,
 "  		print rnode.prefix\n"
 );
 
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef radix_module_def = {
+    PyModuleDef_HEAD_INIT,
+    "radix",
+    module_doc,
+    -1,
+    radix_methods,                         // methods
+    NULL,                                  // m_reload
+    NULL,                                  // traverse
+    NULL,                                  // clear
+    NULL                                   // free
+};
+#endif
+
 #if defined(_MSC_VER)
 static void cleanupradix(void)
 {
@@ -945,8 +989,7 @@ static void cleanupradix(void)
 }
 #endif
 
-PyMODINIT_FUNC
-initradix(void)
+static PyObject *module_initialize(void)
 {
 	PyObject *m, *d;
 #if defined(_MSC_VER)
@@ -962,28 +1005,46 @@ initradix(void)
 	case WSASYSNOTREADY:
 		PyErr_SetString(PyExc_ImportError, "Winsock error: "
 		    "network subsystem not ready");
-		return;
+		return NULL;
 	case WSAEINVAL:
 	case WSAVERNOTSUPPORTED:
 		PyErr_SetString(PyExc_ImportError, "Winsock error: "
 		    "required winsock version 2.2 not supported");
-		return;
+		return NULL;
 	default:
 		snprintf(errbuf, sizeof(errbuf), "Winsock error: code %d", r);
 		PyErr_SetString(PyExc_ImportError, errbuf);
-		return;
+		return NULL;
 	}
 #endif
 
 	if (PyType_Ready(&Radix_Type) < 0)
-		return;
+		return NULL;
 	if (PyType_Ready(&RadixNode_Type) < 0)
-		return;
+		return NULL;
+#if PY_MAJOR_VERSION >= 3
+	m = PyModule_Create(&radix_module_def);
+#else
 	m = Py_InitModule3("radix", radix_methods, module_doc);
+#endif
 
 	/* Stash the callable constructor for use in Radix.__reduce__ */
 	d = PyModule_GetDict(m);
 	radix_constructor = PyDict_GetItemString(d, "Radix");
 
 	PyModule_AddStringConstant(m, "__version__", "0.4");
+
+	return m;
 }
+
+#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC PyInit_radix(void)
+{
+	return module_initialize();
+}
+#else
+PyMODINIT_FUNC initradix(void)
+{
+	module_initialize();
+}
+#endif
