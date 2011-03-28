@@ -346,6 +346,14 @@ class TestRadix(unittest.TestCase):
 				node.data["j"] = j
 		self.assertEquals(len(tree2.nodes()), num_nodes_in)
 
+	def test_22_search_best(self):
+		tree = radix.Radix()
+		tree.add('10.0.0.0/8')
+		tree.add('10.0.0.0/13')
+		tree.add('10.0.0.0/16')
+		self.assertEquals(tree.search_best('10.0.0.0/15').prefix,
+		    '10.0.0.0/13')
+
 def main():
 	unittest.main()
 
