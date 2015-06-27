@@ -1,0 +1,5 @@
+py-radix is an implementation of a radix tree for Python, which supports storage and lookups of IPv4 and IPv6 networks. This is a Python equivalent to Dave Plonka's Perl [Net::Patricia](http://net.doit.wisc.edu/~plonka/Net-Patricia/) (it even steals the same radix tree code from MRTd).
+
+The radix tree (a.k.a [Patricia tree](http://www.nist.gov/dads/HTML/patriciatree.html)) is the data structure most commonly used for routing table lookups. It efficiently stores network prefixes of varying lengths and allows fast lookups of containing networks. py-radix's implementation is built solely for networks (the data structure itself is more general).
+
+py-radix is licensed under a ISC/BSD licence. The underlying radix tree implementation is taken (and modified) from MRTd and is subject to a 4-term BSD license. See the [LICENSE](http://code.google.com/p/py-radix/source/browse/LICENSE) file for details.
